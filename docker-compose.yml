@@ -8,22 +8,14 @@ services:
     networks:
       - webnet
 
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:80"
-    networks:
-      - webnet
-
-  nginx:
+  web:
     build:
       context: .
-      dockerfile: nginx/Dockerfile
+      dockerfile: Dockerfile.frontend  # node + nginx 멀티스테이지 Dockerfile
     ports:
       - "80:80"
     depends_on:
       - backend
-      - frontend
     networks:
       - webnet
 
