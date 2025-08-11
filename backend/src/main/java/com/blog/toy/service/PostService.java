@@ -1,11 +1,14 @@
 package com.blog.toy.service;
 
 import com.blog.toy.domain.Post;
+import com.blog.toy.dto.CommentResponseDto;
+import com.blog.toy.dto.PostResponseDto;
 import com.blog.toy.repository.PostRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class PostService {
@@ -41,4 +44,30 @@ public class PostService {
     public List<Post> search(String keyword) {
         return postRepository.findByTitleContainingOrContentContaining(keyword, keyword);
     }
+   
+    // 게시글과 해당 게시글의 댓글을 포함한 DTO 반환
+    // 이 메서드는 게시글 ID를 통해 게시글과 댓글 정보를 포함한 PostResponseDto를 반환합니다.
+       public PostResponseDto getPostWithComments(Long id) {
+        Post post = postRepository.findById(id).orElseThrow();
+
+        List<CommentResponseDto> commentDtos = post.getComments().stream()
+            .map(comment -> CommentResponseDto.builder()
+                .id(comment.getId())
+                .author(comment.getAuthor())
+                .content(comment.getContent())
+                .createdAt(comment.getCreatedAt())
+                .build())
+            .collect(Collectors.toList());
+
+        return PostResponseDto.builder()
+            .id(post.getId())
+            .title(post.getTitle())
+            .content(post.getContent())
+            .author(post.getAuthor())
+            .createdAt(post.getCreatedAt())
+            .updatedAt(post.getUpdatedAt())
+            .comments(commentDtos)
+            .build();
+    }
+
 }

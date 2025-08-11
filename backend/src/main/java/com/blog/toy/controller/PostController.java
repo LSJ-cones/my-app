@@ -1,6 +1,7 @@
 package com.blog.toy.controller;
 
 import com.blog.toy.domain.Post;
+import com.blog.toy.dto.PostResponseDto;
 import com.blog.toy.service.PostService;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,11 +23,12 @@ public class PostController {
         return postService.findAll();
     }
 
-    // 개별 게시글 조회, 생성, 수정, 삭제
+    // 개별 게시글 조회
     @GetMapping("/{id}")
-    public Post getPostById(@PathVariable Long id) {
-        return postService.findById(id).orElseThrow();
+    public PostResponseDto getPostById(@PathVariable Long id) {
+        return postService.getPostWithComments(id);
     }
+
 
     // 게시글 생성
     @PostMapping
