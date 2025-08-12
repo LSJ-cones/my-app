@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: my-app-backend
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/blogdb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+    networks:
+      - webnet
+
+  db:
+    image: postgres:15
+    container_name: my-app-db
+    environment:
+      - POSTGRES_DB=blogdb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - webnet
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: my-app-web
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - webnet
+
+volumes:
+  postgres_data:
+
+networks:
+  webnet:
+    driver: bridge
