@@ -3,7 +3,10 @@ package com.blog.toy.service;
 import java.util.stream.Collectors;
 import com.blog.toy.domain.Comment;
 import com.blog.toy.dto.CommentResponseDto;
+import com.blog.toy.dto.PageRequestDto;
+import com.blog.toy.dto.PageResponseDto;
 import com.blog.toy.repository.CommentRepository;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -28,6 +31,22 @@ public class CommentService {
                 .map(comment -> CommentResponseDto.builder().id(comment.getId()).author(comment.getAuthor())
                         .content(comment.getContent()).createdAt(comment.getCreatedAt()).build())
                 .collect(Collectors.toList());
+    }
+    
+    // 댓글 조회 (페이징 적용): 특정 게시글에 대한 댓글을 페이징하여 조회합니다.
+    public PageResponseDto<CommentResponseDto> getCommentsByPostIdWithPaging(Long postId, PageRequestDto pageRequestDto) {
+        Page<Comment> commentPage = commentRepository.findByPostId(postId, pageRequestDto.toPageable());
+        
+        Page<CommentResponseDto> commentResponseDtoPage = commentPage.map(comment -> 
+            CommentResponseDto.builder()
+                .id(comment.getId())
+                .author(comment.getAuthor())
+                .content(comment.getContent())
+                .createdAt(comment.getCreatedAt())
+                .build()
+        );
+        
+        return new PageResponseDto<>(commentResponseDtoPage);
     }
 
     // 댓글 추가: 댓글을 추가하고, 생성일시를 현재 시간으로 설정합니다.

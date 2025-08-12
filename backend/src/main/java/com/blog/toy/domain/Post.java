@@ -19,16 +19,7 @@ public class Post {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    // 게시글 ID
     private Long id;
-
-    // 댓글 목록을 관리하기 위한 연관관계 설정
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    // 댓글 목록을 초기화하기 위해 @Builder.Default 사용
-    @Builder.Default
-    // JSON 직렬화 시 무한 참조를 방지하기 위해 @JsonManagedReference 사용
-    @JsonManagedReference
-    private List<Comment> comments = new ArrayList<>();
 
     // 게시글 제목, 내용, 작성자, 생성일시, 수정일시
     private String title;
@@ -39,6 +30,40 @@ public class Post {
 
     // 게시글 작성자
     private String author;
+
+    // 게시글 상태 (DRAFT, PUBLISHED, ARCHIVED)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PostStatus status = PostStatus.DRAFT;
+
+    // 조회수
+    @Column(name = "view_count")
+    private Integer viewCount = 0;
+
+    // 카테고리와의 관계 (N:1)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
+    // 태그와의 관계 (N:M)
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+        name = "post_tags",
+        joinColumns = @JoinColumn(name = "post_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private List<Tag> tags = new ArrayList<>();
+
+               // 댓글 목록을 관리하기 위한 연관관계 설정
+           @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+           @Builder.Default
+           @JsonManagedReference
+           private List<Comment> comments = new ArrayList<>();
+
+           // 파일 목록을 관리하기 위한 연관관계 설정
+           @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+           @Builder.Default
+           private List<File> files = new ArrayList<>();
 
     // 게시글 생성일시, 수정일시
     private LocalDateTime createdAt;
@@ -56,5 +81,32 @@ public class Post {
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    // 조회수 증가 메소드
+    public void incrementViewCount() {
+        this.viewCount = (this.viewCount == null) ? 1 : this.viewCount + 1;
+    }
+
+    // 태그 추가 메소드
+    public void addTag(Tag tag) {
+        if (!this.tags.contains(tag)) {
+            this.tags.add(tag);
+            tag.getPosts().add(this);
+        }
+    }
+
+    // 태그 제거 메소드
+    public void removeTag(Tag tag) {
+        if (this.tags.remove(tag)) {
+            tag.getPosts().remove(this);
+        }
+    }
+
+    // 게시글 상태 열거형
+    public enum PostStatus {
+        DRAFT,      // 임시저장
+        PUBLISHED,  // 발행
+        ARCHIVED    // 보관
     }
 }
