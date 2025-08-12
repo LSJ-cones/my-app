@@ -1,319 +1,239 @@
-# 블로그 프로젝트 개발 완료 보고서
+# 블로그 애플리케이션 프로젝트 요약
 
 ## 📋 프로젝트 개요
-- **프로젝트명**: MY-APP 블로그 시스템
-- **기술 스택**: Spring Boot 3.5.4, PostgreSQL, JWT, Spring Security
-- **개발 기간**: 2025년 8월
-- **상태**: 기본 기능 구현 완료
+Spring Boot 기반의 블로그 애플리케이션으로, JWT 인증, 페이징, 카테고리/태그 시스템, 파일 업로드, 고급 검색, 댓글 시스템 등 다양한 기능을 제공합니다.
 
----
-
-## 🚀 구현된 주요 기능
-
-### 1. 기본 블로그 시스템 ✅
-- **Post 엔티티**: 제목, 내용, 작성자, 생성/수정일시
-- **Comment 엔티티**: 댓글 기능 (Post와 1:N 관계)
-- **페이징 시스템**: 게시글과 댓글 목록 조회 시 페이징 지원
-- **REST API**: CRUD 엔드포인트 구현
-
-### 2. JWT 인증 시스템 ✅
-- **User 엔티티**: 사용자 정보 (username, email, password, role)
-- **Spring Security**: 인증/인가 시스템
-- **JWT 토큰**: 로그인/회원가입, 토큰 기반 인증
-- **Role 기반 권한**: ADMIN, USER 역할 구분
-- **BCrypt 암호화**: 비밀번호 암호화
-
-### 3. 카테고리/태그 시스템 ✅
-- **Category 엔티티**: 게시글 분류 (Spring Boot, Java, Web Development 등)
-- **Tag 엔티티**: 게시글 태깅 (Many-to-Many 관계)
-- **Post Status**: DRAFT, PUBLISHED, ARCHIVED 상태 관리
-- **조회수 기능**: 게시글 조회수 추적
-
-### 4. 파일 업로드 시스템 ✅
-- **File 엔티티**: 파일 정보 저장 (원본명, 저장명, 경로, 크기 등)
-- **단일/다중 파일 업로드**: MultipartFile 처리
-- **파일 다운로드**: Resource 기반 다운로드
-- **파일 검증**: 확장자, 크기 제한 (jpg, jpeg, png, gif, pdf, doc, docx, txt, json, xml, csv)
-- **로컬 저장소**: `./uploads` 디렉토리에 파일 저장
-
-### 5. Swagger UI ✅
-- **OpenAPI 3.0**: API 문서화
-- **Authorize 버튼**: JWT 토큰 인증 지원
-- **파일 업로드 UI**: Choose File 버튼 지원
-
-### 6. 데이터베이스 ✅
-- **PostgreSQL**: 메인 데이터베이스
-- **초기 데이터**: 200개 더미 게시글, 3323개 댓글
-- **사용자 계정**: admin/admin123, user/user123
-- **카테고리**: Spring Boot, Java, Web Development
-
----
+## 🏗️ 기술 스택
+- **Backend**: Spring Boot 3.5.4, Spring Security, Spring Data JPA
+- **Database**: PostgreSQL
+- **Authentication**: JWT (JSON Web Tokens)
+- **API Documentation**: Swagger/OpenAPI 3.0 (SpringDoc 2.8.9)
+- **Build Tool**: Gradle
+- **Language**: Java 17
 
 ## 📁 프로젝트 구조
-
 ```
 my-app/
-├── backend/
+├── backend/                    # Spring Boot 백엔드
 │   ├── src/main/java/com/blog/toy/
-│   │   ├── domain/
-│   │   │   ├── Post.java          # 게시글 엔티티
-│   │   │   ├── Comment.java       # 댓글 엔티티
-│   │   │   ├── User.java          # 사용자 엔티티
-│   │   │   ├── Category.java      # 카테고리 엔티티
-│   │   │   ├── Tag.java           # 태그 엔티티
-│   │   │   └── File.java          # 파일 엔티티
-│   │   ├── controller/
-│   │   │   ├── PostController.java    # 게시글 API
-│   │   │   ├── CommentController.java # 댓글 API
-│   │   │   ├── AuthController.java    # 인증 API
-│   │   │   ├── CategoryController.java # 카테고리 API
-│   │   │   ├── TagController.java     # 태그 API
-│   │   │   └── FileController.java    # 파일 API
-│   │   ├── service/
-│   │   │   ├── PostService.java       # 게시글 서비스
-│   │   │   ├── CommentService.java    # 댓글 서비스
-│   │   │   ├── AuthService.java       # 인증 서비스
-│   │   │   ├── CategoryService.java   # 카테고리 서비스
-│   │   │   ├── TagService.java        # 태그 서비스
-│   │   │   ├── FileService.java       # 파일 서비스
-│   │   │   └── CustomUserDetailsService.java # 사용자 상세 서비스
-│   │   ├── repository/
-│   │   │   ├── PostRepository.java    # 게시글 리포지토리
-│   │   │   ├── CommentRepository.java # 댓글 리포지토리
-│   │   │   ├── UserRepository.java    # 사용자 리포지토리
-│   │   │   ├── CategoryRepository.java # 카테고리 리포지토리
-│   │   │   ├── TagRepository.java     # 태그 리포지토리
-│   │   │   └── FileRepository.java    # 파일 리포지토리
-│   │   ├── dto/
-│   │   │   ├── PostRequestDto.java    # 게시글 요청 DTO
-│   │   │   ├── PostResponseDto.java   # 게시글 응답 DTO
-│   │   │   ├── CommentResponseDto.java # 댓글 응답 DTO
-│   │   │   ├── PageRequestDto.java    # 페이징 요청 DTO
-│   │   │   ├── PageResponseDto.java   # 페이징 응답 DTO
-│   │   │   ├── auth/                  # 인증 관련 DTO
-│   │   │   ├── category/              # 카테고리 관련 DTO
-│   │   │   ├── tag/                   # 태그 관련 DTO
-│   │   │   └── file/                  # 파일 관련 DTO
-│   │   ├── security/
-│   │   │   ├── JwtTokenProvider.java  # JWT 토큰 생성/검증
-│   │   │   └── JwtAuthenticationFilter.java # JWT 인증 필터
-│   │   └── config/
-│   │       ├── SecurityConfig.java    # Spring Security 설정
-│   │       ├── SwaggerConfig.java     # Swagger UI 설정
-│   │       ├── WebConfig.java         # Web MVC 설정
-│   │       └── DataInitializer.java   # 초기 데이터 로딩
-│   └── src/main/resources/
-│       └── application.properties     # 애플리케이션 설정
-├── frontend/                          # React 프론트엔드 (기본 구조)
-├── nginx/                             # Nginx 설정
-└── docker-compose.yml                 # Docker 구성
+│   │   ├── config/            # 설정 클래스들
+│   │   ├── controller/        # REST API 컨트롤러
+│   │   ├── domain/           # 엔티티 클래스들
+│   │   ├── dto/              # 데이터 전송 객체들
+│   │   ├── repository/       # JPA 리포지토리
+│   │   ├── service/          # 비즈니스 로직 서비스
+│   │   └── security/         # JWT 보안 관련
+│   ├── src/main/resources/
+│   │   ├── application.properties
+│   │   └── static/           # 정적 파일들
+│   └── build.gradle
+├── frontend/                  # React 프론트엔드
+└── docker-compose.yml        # Docker 구성
 ```
 
----
+## 🔧 주요 기능
 
-## ⚙️ 주요 설정
+### 1. 인증 및 보안 (JWT)
+- **JWT 토큰 기반 인증**
+- **Spring Security 설정**
+- **사용자 역할 관리** (ADMIN, USER)
+- **보안 필터 체인**
 
-### application.properties
-```properties
-# 서버 포트
-server.port=8081
-
-# 데이터베이스
-spring.datasource.url=jdbc:postgresql://database-2.cxw0w0g0cyap.ap-northeast-1.rds.amazonaws.com:5432/my_app
-spring.datasource.username=postgres
-spring.datasource.password=diRlqkq99*
-
-# JPA 설정
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-
-# JWT 설정
-app.jwt.secret=mySecretKeyForBlogApplicationJWTTokenGenerationAndValidation2024
-app.jwt.expiration=864000000
-
-# 파일 업로드 설정
-spring.servlet.multipart.max-file-size=10MB
-spring.servlet.multipart.max-request-size=10MB
-spring.servlet.multipart.enabled=true
-app.file.upload-dir=./uploads
-app.file.allowed-extensions=jpg,jpeg,png,gif,pdf,doc,docx,txt,json,xml,csv
-
-# Swagger UI 설정
-springdoc.api-docs.path=/v3/api-docs
-springdoc.swagger-ui.path=/swagger-ui.html
-springdoc.swagger-ui.enabled=true
-springdoc.api-docs.enabled=true
-```
-
-### build.gradle (주요 의존성)
-```gradle
-dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-security'
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
-    
-    // JWT
-    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
-    
-    // Swagger/OpenAPI
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
-    
-    // 파일 업로드
-    implementation 'commons-io:commons-io:2.11.0'
-    implementation 'org.apache.commons:commons-lang3:3.12.0'
-    
-    // 데이터베이스
-    runtimeOnly 'org.postgresql:postgresql'
-}
-```
-
----
-
-## 🔌 API 엔드포인트
-
-### 인증 API
+**API 엔드포인트:**
 - `POST /api/auth/login` - 로그인
 - `POST /api/auth/signup` - 회원가입
 
-### 게시글 API
+### 2. 게시글 관리
+- **CRUD 작업**
+- **페이징 처리**
+- **카테고리/태그 시스템**
+- **파일 업로드/다운로드**
+- **조회수 관리**
+- **게시글 상태 관리** (DRAFT, PUBLISHED, ARCHIVED)
+
+**API 엔드포인트:**
 - `GET /api/posts` - 게시글 목록 (페이징)
 - `GET /api/posts/{id}` - 게시글 상세
 - `POST /api/posts` - 게시글 생성
 - `PUT /api/posts/{id}` - 게시글 수정
 - `DELETE /api/posts/{id}` - 게시글 삭제
-- `GET /api/posts/category/{categoryId}` - 카테고리별 게시글
-- `GET /api/posts/tags` - 태그별 게시글
-- `GET /api/posts/status/{status}` - 상태별 게시글
 
-### 댓글 API
-- `GET /api/posts/{postId}/comments` - 게시글 댓글 목록
-- `POST /api/posts/{postId}/comments` - 댓글 작성
-- `PUT /api/comments/{commentId}` - 댓글 수정
-- `DELETE /api/comments/{commentId}` - 댓글 삭제
+### 3. 카테고리/태그 시스템
+- **카테고리 CRUD** (관리자 전용)
+- **태그 CRUD** (관리자 전용)
+- **카테고리별 게시글 조회**
+- **태그별 게시글 조회**
 
-### 파일 API
-- `POST /api/files/upload` - 단일 파일 업로드
-- `POST /api/files/upload/multiple` - 다중 파일 업로드
-- `GET /api/files/download/{fileId}` - 파일 다운로드
-- `GET /api/files/my-files` - 내 파일 목록
-- `GET /api/files/post/{postId}` - 게시글별 파일 목록
-- `DELETE /api/files/{fileId}` - 파일 삭제
-
-### 카테고리 API
+**API 엔드포인트:**
 - `GET /api/categories` - 카테고리 목록
-- `POST /api/categories` - 카테고리 생성 (ADMIN)
-- `PUT /api/categories/{id}` - 카테고리 수정 (ADMIN)
-- `DELETE /api/categories/{id}` - 카테고리 삭제 (ADMIN)
-
-### 태그 API
+- `POST /api/categories` - 카테고리 생성
 - `GET /api/tags` - 태그 목록
-- `POST /api/tags` - 태그 생성 (ADMIN)
-- `PUT /api/tags/{id}` - 태그 수정 (ADMIN)
-- `DELETE /api/tags/{id}` - 태그 삭제 (ADMIN)
+- `POST /api/tags` - 태그 생성
 
----
+### 4. 파일 업로드/다운로드
+- **단일/다중 파일 업로드**
+- **파일 타입 검증**
+- **파일 크기 제한** (10MB)
+- **지원 파일 형식**: jpg, jpeg, png, gif, pdf, doc, docx, txt, json, xml, csv
+
+**API 엔드포인트:**
+- `POST /api/files/upload` - 단일 파일 업로드
+- `POST /api/files/upload-multiple` - 다중 파일 업로드
+- `GET /api/files/download/{filename}` - 파일 다운로드
+- `GET /api/files/post/{postId}` - 게시글별 파일 목록
+
+### 5. 고급 검색 기능
+- **키워드 검색**
+- **카테고리별 검색**
+- **태그별 검색**
+- **상태별 검색**
+- **정렬 옵션** (최신순, 인기순, 댓글순)
+- **복합 검색 조건**
+
+**API 엔드포인트:**
+- `POST /api/posts/advanced-search` - 고급 검색
+- `GET /api/posts/category/{categoryId}` - 카테고리별 검색
+- `GET /api/posts/tags` - 태그별 검색
+- `GET /api/posts/status/{status}` - 상태별 검색
+- `GET /api/posts/popular` - 인기 게시글
+- `GET /api/posts/recent` - 최신 게시글
+- `GET /api/posts/most-commented` - 댓글 많은 게시글
+
+### 6. 댓글 시스템 고도화 ⭐ NEW
+- **대댓글 기능** (댓글의 댓글)
+- **좋아요/싫어요 시스템**
+- **댓글 신고 기능**
+- **댓글 상태 관리** (ACTIVE, DELETED, REPORTED)
+- **사용자별 댓글 관리**
+- **관리자 신고 처리**
+
+**API 엔드포인트:**
+- `GET /api/comments/post/{postId}` - 게시글 댓글 목록
+- `POST /api/comments` - 댓글 생성
+- `PUT /api/comments/{id}` - 댓글 수정
+- `DELETE /api/comments/{id}` - 댓글 삭제 (소프트 삭제)
+- `POST /api/comments/{id}/reaction` - 댓글 좋아요/싫어요
+- `POST /api/comments/{id}/report` - 댓글 신고
+- `GET /api/comments/{id}/replies` - 대댓글 목록
+- `GET /api/comments/user/{userId}` - 사용자 댓글 목록
+- `GET /api/comments/reported` - 신고된 댓글 목록 (관리자용)
+- `PUT /api/comments/reports/{reportId}` - 신고 처리 (관리자용)
 
 ## 🗄️ 데이터베이스 스키마
 
 ### 주요 테이블
 1. **users** - 사용자 정보
 2. **posts** - 게시글
-3. **comments** - 댓글
-4. **categories** - 카테고리
-5. **tags** - 태그
-6. **post_tags** - 게시글-태그 관계
-7. **files** - 파일 정보
+3. **comments** - 댓글 (고도화됨)
+4. **comment_reactions** - 댓글 반응 (좋아요/싫어요)
+5. **comment_reports** - 댓글 신고
+6. **categories** - 카테고리
+7. **tags** - 태그
+8. **post_tags** - 게시글-태그 연결
+9. **files** - 파일 정보
 
-### 초기 데이터
-- **사용자**: admin/admin123, user/user123
-- **게시글**: 200개 더미 데이터
-- **댓글**: 3323개 더미 데이터
-- **카테고리**: Spring Boot, Java, Web Development
+### 댓글 시스템 관련 테이블
+```sql
+-- 댓글 테이블 (확장됨)
+comment (
+    id, content, created_at, updated_at, status,
+    like_count, dislike_count, parent_id, post_id, user_id, author
+)
 
----
+-- 댓글 반응 테이블
+comment_reactions (
+    id, type, created_at, comment_id, user_id
+)
 
-## 🔧 개발 과정에서 해결한 주요 이슈
+-- 댓글 신고 테이블
+comment_reports (
+    id, reason, description, created_at, status, comment_id, reporter_id
+)
+```
 
-### 1. Swagger UI 문제
-- **문제**: Base64 인코딩으로 인한 JSON 응답 깨짐
-- **해결**: WebConfig에서 MappingJackson2HttpMessageConverter 제거
+## 🔐 보안 설정
 
-### 2. JWT 토큰 만료
-- **문제**: 토큰 만료 시간이 너무 짧음
-- **해결**: application.properties에서 expiration을 864000000ms로 증가
+### JWT 설정
+```properties
+app.jwt.secret=mySecretKeyForBlogApplicationJWTTokenGenerationAndValidation2024
+app.jwt.expiration=864000000
+```
 
-### 3. 파일 업로드 권한
-- **문제**: 403 Forbidden 에러
-- **해결**: JWT 토큰 갱신 및 SecurityConfig 설정 확인
+### Spring Security 설정
+- **공개 경로**: `/api/auth/**`, `/v3/api-docs/**`, `/swagger-ui/**`, `/api/hello`
+- **인증 필요**: 모든 다른 경로
+- **관리자 전용**: 카테고리/태그 관리, 신고 처리
 
-### 4. 파일 형식 검증
-- **문제**: JSON 파일 업로드 시 "지원하지 않는 파일 형식" 에러
-- **해결**: allowed-extensions에 json, xml, csv 추가
-
-### 5. Swagger UI Authorize 버튼
-- **문제**: Authorize 버튼이 보이지 않음
-- **해결**: SwaggerConfig에 SecurityScheme 및 SecurityRequirement 추가
-
----
-
-## 🎯 현재 상태
-
-### ✅ 완료된 기능
-- [x] 기본 CRUD 기능
-- [x] 페이징 시스템
-- [x] JWT 인증/인가
-- [x] 카테고리/태그 시스템
-- [x] 파일 업로드/다운로드
-- [x] Swagger UI 문서화
-- [x] 초기 데이터 로딩
-
-### 🔄 다음 단계 고려사항
-- [ ] 검색 기능 (제목, 내용, 태그별 검색)
-- [ ] 통계 기능 (조회수, 댓글수 통계)
-- [ ] 프론트엔드 React 연동
-- [ ] 권한 관리 세분화
-- [ ] 이미지 썸네일 생성
-- [ ] 파일 압축/압축해제
-
----
+## 📊 페이징 처리
+- **기본 페이지 크기**: 10
+- **정렬 옵션**: createdAt, title, viewCount
+- **정렬 방향**: asc, desc
 
 ## 🚀 실행 방법
 
-### 1. 애플리케이션 시작
+### 1. 데이터베이스 설정
+```sql
+-- PostgreSQL 연결 후 스키마 업데이트
+\i update_comment_schema.sql
+\i insert_dummy_comments.sql
+```
+
+### 2. 애플리케이션 실행
 ```bash
 cd backend
 ./gradlew bootRun
 ```
 
-### 2. Swagger UI 접속
-```
-http://localhost:8081/swagger-ui.html
+### 3. API 문서 확인
+- Swagger UI: http://localhost:8081/swagger-ui.html
+- OpenAPI JSON: http://localhost:8081/v3/api-docs
+
+## 🧪 테스트
+
+### 댓글 시스템 테스트
+```powershell
+# PowerShell에서 실행
+.\test-comment-system.ps1
 ```
 
-### 3. 로그인 테스트
-```bash
-# 로그인
-curl -X POST "http://localhost:8081/api/auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
-
-# 토큰으로 API 호출
-curl -X GET "http://localhost:8081/api/posts" \
-  -H "Authorization: Bearer {JWT_TOKEN}"
+### 검색 기능 테스트
+```powershell
+# PowerShell에서 실행
+.\test-search.ps1
 ```
+
+## 📈 성능 최적화
+- **데이터베이스 인덱스** 설정
+- **JPA 페이징** 활용
+- **Lazy Loading** 적용
+- **캐싱 전략** (향후 Redis 도입 예정)
+
+## 🔄 향후 개선 계획
+1. **실시간 알림 시스템** (WebSocket)
+2. **이메일 알림**
+3. **사용자 프로필 관리**
+4. **게시글 좋아요/북마크**
+5. **API 버전 관리**
+6. **Redis 캐싱**
+7. **이미지 썸네일 생성**
+8. **SEO 최적화**
+
+## 🐛 해결된 주요 이슈
+1. **Swagger Base64 인코딩 문제** - WebConfig 수정으로 해결
+2. **JWT 토큰 만료** - 만료 시간 연장 (10일)
+3. **파일 업로드 버튼 누락** - Swagger UI 파라미터 설정으로 해결
+4. **PowerShell 인코딩 문제** - Windows 환경 특성으로 인식
+5. **데이터베이스 스키마 변경** - SQL 스크립트로 해결
+
+## 📝 개발 노트
+- **JWT 인증**이 모든 API에 적용됨
+- **관리자 권한**이 필요한 기능들은 `@PreAuthorize("hasRole('ADMIN')")` 적용
+- **댓글 시스템**은 대댓글, 좋아요/싫어요, 신고 기능을 모두 포함
+- **파일 업로드**는 로컬 저장소 사용 (향후 클라우드 스토리지 고려)
+- **검색 기능**은 복합 조건을 지원하여 유연한 검색 가능
 
 ---
 
-## 📝 개발자 정보
-- **개발자**: LSJ
-- **이메일**: mistake@kakao.com
-- **프로젝트**: MY-APP 블로그 시스템
-- **버전**: 1.0.0
-- **라이선스**: MIT License
-
----
-
-*이 문서는 2025년 8월 12일 기준으로 작성되었습니다.*
+**최종 업데이트**: 2024년 8월 12일
+**버전**: 1.0.0
+**개발자**: Blog Team

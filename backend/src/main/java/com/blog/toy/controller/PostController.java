@@ -3,8 +3,10 @@ package com.blog.toy.controller;
 import com.blog.toy.domain.Post;
 import com.blog.toy.dto.PageRequestDto;
 import com.blog.toy.dto.PageResponseDto;
+import com.blog.toy.dto.PostReactionDto;
 import com.blog.toy.dto.PostRequestDto;
 import com.blog.toy.dto.PostResponseDto;
+import com.blog.toy.dto.SearchRequestDto;
 import com.blog.toy.service.PostService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -216,5 +218,94 @@ public class PostController {
         pageRequestDto.setSortDirection("desc");
         
         return postService.findByStatus(status, pageRequestDto);
+    }
+
+    // === 고급 검색 기능 ===
+    
+    @Operation(summary = "고급 검색", description = "키워드, 카테고리, 태그, 상태를 조합한 고급 검색을 수행합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "검색 성공"),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터")
+    })
+    @PostMapping("/advanced-search")
+    public PageResponseDto<PostResponseDto> advancedSearch(@Valid @RequestBody SearchRequestDto searchRequestDto) {
+        return postService.advancedSearch(searchRequestDto);
+    }
+    
+    @Operation(summary = "인기 게시글 조회", description = "조회수가 높은 게시글을 조회합니다 (최근 30일).")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공")
+    })
+    @GetMapping("/popular")
+    public PageResponseDto<PostResponseDto> getPopularPosts(
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") 
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "10") 
+            @RequestParam(defaultValue = "10") int size) {
+        
+        PageRequestDto pageRequestDto = new PageRequestDto();
+        pageRequestDto.setPage(page);
+        pageRequestDto.setSize(size);
+        pageRequestDto.setSortBy("viewCount");
+        pageRequestDto.setSortDirection("desc");
+        
+        return postService.findPopularPosts(pageRequestDto);
+    }
+    
+    @Operation(summary = "최근 게시글 조회", description = "최근 7일 내에 작성된 게시글을 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공")
+    })
+    @GetMapping("/recent")
+    public PageResponseDto<PostResponseDto> getRecentPosts(
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") 
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "10") 
+            @RequestParam(defaultValue = "10") int size) {
+        
+        PageRequestDto pageRequestDto = new PageRequestDto();
+        pageRequestDto.setPage(page);
+        pageRequestDto.setSize(size);
+        pageRequestDto.setSortBy("createdAt");
+        pageRequestDto.setSortDirection("desc");
+        
+        return postService.findRecentPosts(pageRequestDto);
+    }
+    
+    @Operation(summary = "댓글 많은 순 게시글 조회", description = "댓글 수가 많은 순으로 게시글을 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공")
+    })
+    @GetMapping("/most-commented")
+    public PageResponseDto<PostResponseDto> getMostCommentedPosts(
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0") 
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "10") 
+            @RequestParam(defaultValue = "10") int size) {
+        
+        PageRequestDto pageRequestDto = new PageRequestDto();
+        pageRequestDto.setPage(page);
+        pageRequestDto.setSize(size);
+        pageRequestDto.setSortBy("commentCount");
+        pageRequestDto.setSortDirection("desc");
+        
+        return postService.findPostsByCommentCount(pageRequestDto);
+    }
+
+    @Operation(summary = "게시글 반응 (좋아요/싫어요)", description = "게시글에 좋아요 또는 싫어요를 누릅니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "반응 성공"),
+        @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터")
+    })
+    @PostMapping("/{postId}/reaction")
+    public ResponseEntity<PostResponseDto> reactToPost(
+            @Parameter(description = "게시글 ID", example = "1") 
+            @PathVariable Long postId,
+            @Valid @RequestBody PostReactionDto reactionDto) {
+        
+        reactionDto.setPostId(postId);
+        PostResponseDto response = postService.reactToPost(reactionDto);
+        return ResponseEntity.ok(response);
     }
 }

@@ -40,6 +40,14 @@ public class Post {
     @Column(name = "view_count")
     private Integer viewCount = 0;
 
+    // 좋아요 수
+    @Column(name = "like_count")
+    private Integer likeCount = 0;
+
+    // 싫어요 수
+    @Column(name = "dislike_count")
+    private Integer dislikeCount = 0;
+
     // 카테고리와의 관계 (N:1)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
@@ -86,6 +94,26 @@ public class Post {
     // 조회수 증가 메소드
     public void incrementViewCount() {
         this.viewCount = (this.viewCount == null) ? 1 : this.viewCount + 1;
+    }
+
+    // 좋아요 수 증가 메소드
+    public void incrementLikeCount() {
+        this.likeCount = (this.likeCount == null) ? 1 : this.likeCount + 1;
+    }
+
+    // 좋아요 수 감소 메소드
+    public void decrementLikeCount() {
+        this.likeCount = (this.likeCount == null || this.likeCount <= 0) ? 0 : this.likeCount - 1;
+    }
+
+    // 싫어요 수 증가 메소드
+    public void incrementDislikeCount() {
+        this.dislikeCount = (this.dislikeCount == null) ? 1 : this.dislikeCount + 1;
+    }
+
+    // 싫어요 수 감소 메소드
+    public void decrementDislikeCount() {
+        this.dislikeCount = (this.dislikeCount == null || this.dislikeCount <= 0) ? 0 : this.dislikeCount - 1;
     }
 
     // 태그 추가 메소드

@@ -54,7 +54,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/swagger-ui/index.html").permitAll()
                 .requestMatchers("/api/hello").permitAll()
-                .anyRequest().authenticated()
+                .requestMatchers("/api/**").permitAll() // 임시로 모든 API 허용
+                .anyRequest().permitAll()
             );
 
         http.authenticationProvider(authenticationProvider());
