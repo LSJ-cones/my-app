@@ -17,6 +17,7 @@ import com.blog.toy.dto.category.CategoryResponseDto;
 import com.blog.toy.dto.file.FileResponseDto;
 import com.blog.toy.dto.tag.TagResponseDto;
 import com.blog.toy.repository.CategoryRepository;
+import com.blog.toy.repository.FileRepository;
 import com.blog.toy.repository.PostReactionRepository;
 import com.blog.toy.repository.PostRepository;
 import com.blog.toy.repository.TagRepository;
@@ -32,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -62,6 +64,9 @@ public class PostService {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private FileRepository fileRepository;
+
     // 전체 게시글 조회
     public List<Post> findAll() {
         return postRepository.findAll();
@@ -74,10 +79,14 @@ public class PostService {
 
     // 게시글 생성
     public PostResponseDto createPost(PostRequestDto postRequestDto) {
+        // 현재 사용자 정보 가져오기
+        User currentUser = getCurrentUser();
+        
         Post post = Post.builder()
                 .title(postRequestDto.getTitle())
                 .content(postRequestDto.getContent())
                 .author(postRequestDto.getAuthor())
+                .authorId(currentUser.getId())  // 작성자 ID 설정
                 .status(postRequestDto.getStatus())
                 .viewCount(0)
                 .build();
@@ -96,13 +105,41 @@ public class PostService {
         }
 
         Post savedPost = postRepository.save(post);
+
+        // 파일 연결
+        if (postRequestDto.getFileIds() != null && !postRequestDto.getFileIds().isEmpty()) {
+            for (Long fileId : postRequestDto.getFileIds()) {
+                com.blog.toy.domain.File file = fileRepository.findById(fileId)
+                        .orElseThrow(() -> new RuntimeException("파일을 찾을 수 없습니다: " + fileId));
+                // postId가 null인 파일만 연결 (이미 연결된 파일은 건너뛰기)
+                if (file.getPost() == null) {
+                    file.setPost(savedPost);
+                    fileRepository.save(file);
+                }
+            }
+        }
+
         return convertToResponseDto(savedPost);
     }
 
     // 게시글 수정
     public PostResponseDto updatePost(Long id, PostRequestDto postRequestDto) {
+        System.out.println("🔧 게시글 수정 시작 - ID: " + id);
+        
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다: " + id));
+
+        // 권한 확인 (작성자 또는 ADMIN만 수정 가능)
+        User currentUser = getCurrentUser();
+        System.out.println("🔧 현재 사용자: " + currentUser.getUsername() + " (ID: " + currentUser.getId() + ", Role: " + currentUser.getRole() + ")");
+        System.out.println("🔧 게시글 작성자: " + post.getAuthor() + " (ID: " + post.getAuthorId() + ")");
+        
+        if (!post.getAuthor().equals(currentUser.getUsername()) && !User.Role.ADMIN.equals(currentUser.getRole())) {
+            System.out.println("❌ 권한 없음 - 게시글 수정 실패");
+            throw new RuntimeException("게시글 수정 권한이 없습니다.");
+        }
+        
+        System.out.println("✅ 권한 확인 통과 - 게시글 수정 진행");
 
         post.setTitle(postRequestDto.getTitle());
         post.setContent(postRequestDto.getContent());
@@ -342,6 +379,12 @@ public class PostService {
         if (existingReaction.isPresent()) {
             PostReaction reaction = existingReaction.get();
             
+                                  // 5분 쿨다운 체크
+                      LocalDateTime fiveMinutesAgo = LocalDateTime.now().minusMinutes(5);
+                      if (reaction.getCreatedAt().isAfter(fiveMinutesAgo)) {
+                          throw new RuntimeException("좋아요/싫어요 기능은 5분 뒤에 수정이 가능합니다.");
+                      }
+            
             // 같은 반응이면 취소
             if (reaction.getType() == reactionDto.getType()) {
                 if (reactionDto.getType() == ReactionType.LIKE) {
@@ -365,6 +408,7 @@ public class PostService {
                 }
                 
                 reaction.setType(reactionDto.getType());
+                reaction.setCreatedAt(LocalDateTime.now()); // 시간 업데이트
                 postReactionRepository.save(reaction);
             }
         } else {
@@ -394,13 +438,19 @@ public class PostService {
     // 현재 사용자 조회
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println("🔍 Authentication: " + authentication);
+        System.out.println("🔍 Authentication name: " + (authentication != null ? authentication.getName() : "null"));
+        System.out.println("🔍 Is authenticated: " + (authentication != null ? authentication.isAuthenticated() : "null"));
+        
         if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+            System.out.println("⚠️ JWT 인증 실패 - admin 사용자로 대체");
             // 임시로 admin 사용자 반환 (테스트용)
             return userRepository.findByUsername("admin")
                     .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         }
         
         String username = authentication.getName();
+        System.out.println("✅ JWT 인증 성공 - 사용자: " + username);
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
     }
@@ -465,21 +515,26 @@ public class PostService {
                                .fileType(file.getFileType())
                                .fileSize(file.getFileSize())
                                .createdAt(file.getCreatedAt())
+                               .url("/api/files/download/" + file.getId())
+                               .name(file.getOriginalFileName())
                                .build())
                        .collect(Collectors.toList()) : new ArrayList<>();
 
-               return PostResponseDto.builder()
-                       .id(post.getId())
-                       .title(post.getTitle())
-                       .content(post.getContent())
-                       .author(post.getAuthor())
-                       .status(post.getStatus())
-                       .viewCount(post.getViewCount())
-                       .category(categoryDto)
-                       .tags(tagDtos)
-                       .files(fileDtos)
-                       .createdAt(post.getCreatedAt())
-                       .updatedAt(post.getUpdatedAt())
-                       .build();
+                               return PostResponseDto.builder()
+                        .id(post.getId())
+                        .title(post.getTitle())
+                        .content(post.getContent())
+                        .author(post.getAuthor())
+                        .authorId(post.getAuthorId())  // 작성자 ID 추가
+                        .status(post.getStatus())
+                        .viewCount(post.getViewCount())
+                        .likeCount(post.getLikeCount() != null ? post.getLikeCount() : 0)
+                        .dislikeCount(post.getDislikeCount() != null ? post.getDislikeCount() : 0)
+                        .category(categoryDto)
+                        .tags(tagDtos)
+                        .files(fileDtos)
+                        .createdAt(post.getCreatedAt())
+                        .updatedAt(post.getUpdatedAt())
+                        .build();
     }
 }

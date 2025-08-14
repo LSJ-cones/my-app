@@ -68,6 +68,7 @@ public class PostReactionService {
         // Post 엔티티의 author는 String이므로 User 엔티티로 조회
         User postAuthor = userRepository.findByUsername(post.getAuthor()).orElse(null);
         if (type == ReactionType.LIKE && postAuthor != null && !currentUser.getId().equals(postAuthor.getId())) {
+            System.out.println("🔔 게시글 좋아요 알림 생성 시도: 게시글 ID=" + postId + ", 게시글 작성자=" + post.getAuthor() + ", 반응 사용자=" + currentUser.getUsername());
             notificationService.createPostLikeNotification(savedReaction);
         }
 

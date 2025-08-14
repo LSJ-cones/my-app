@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LogIn, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
+import api from '../services/api';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -27,49 +28,57 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // 실제 로그인 API가 없으므로 임시 로그인 사용
-      const userData = {
-        id: 1,
-        username: formData.username,
-        email: `${formData.username}@example.com`,
-        role: 'USER'
-      };
-      
-      tempLogin(userData);
-      toast.success('로그인되었습니다!');
-      navigate('/');
+      // 실제 로그인 API 호출
+      const result = await login(formData);
+      if (result.success) {
+        toast.success('로그인되었습니다!');
+        navigate('/');
+      } else {
+        toast.error(result.error || '로그인에 실패했습니다.');
+      }
     } catch (error) {
+      console.error('로그인 오류:', error);
       toast.error('로그인에 실패했습니다.');
     } finally {
       setLoading(false);
     }
   };
 
-  // 개발용 빠른 로그인
-  const quickLogin = (username) => {
-    const userData = {
-      id: username === 'admin' ? 3 : 1,
-      username: username,
-      email: `${username}@example.com`,
-      role: username === 'admin' ? 'ADMIN' : 'USER'
-    };
-    
-    tempLogin(userData);
-    toast.success(`${username}으로 로그인되었습니다!`);
-    navigate('/');
+  // 개발용 빠른 로그인 (실제 API 호출)
+  const quickLogin = async (username) => {
+    setLoading(true);
+    try {
+      const credentials = {
+        username: username,
+        password: username === 'admin' ? 'admin123' : 'user123'
+      };
+      
+      const result = await login(credentials);
+      if (result.success) {
+        toast.success(`${username}으로 로그인되었습니다!`);
+        navigate('/');
+      } else {
+        toast.error(result.error || '로그인에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('빠른 로그인 오류:', error);
+      toast.error('로그인에 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <div className="mx-auto h-12 w-12 bg-gradient-to-r from-primary-600 to-primary-800 rounded-lg flex items-center justify-center">
-            <LogIn className="h-6 w-6 text-white" />
+          <div className="mx-auto h-16 w-16 bg-gradient-to-r from-red-600 to-red-800 rounded-2xl flex items-center justify-center shadow-lg">
+            <LogIn className="h-8 w-8 text-white" />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
             로그인
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-gray-400">
             블로그에 로그인하여 모든 기능을 이용하세요
           </p>
         </div>
@@ -77,7 +86,7 @@ const Login = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="username" className="block text-sm font-medium text-gray-300">
                 사용자명
               </label>
               <input
@@ -87,13 +96,13 @@ const Login = () => {
                 required
                 value={formData.username}
                 onChange={handleChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-3 border border-gray-600 placeholder-gray-500 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent sm:text-sm"
                 placeholder="사용자명을 입력하세요"
               />
             </div>
             
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300">
                 비밀번호
               </label>
               <div className="mt-1 relative">
@@ -104,7 +113,7 @@ const Login = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="appearance-none relative block w-full px-3 py-2 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full px-3 py-3 pr-10 border border-gray-600 placeholder-gray-500 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent sm:text-sm"
                   placeholder="비밀번호를 입력하세요"
                 />
                 <button
@@ -126,7 +135,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
             >
               {loading ? '로그인 중...' : '로그인'}
             </button>
@@ -135,19 +144,21 @@ const Login = () => {
 
         {/* 개발용 빠른 로그인 버튼 */}
         <div className="mt-6">
-          <div className="text-center text-sm text-gray-600 mb-3">
+          <div className="text-center text-sm text-gray-400 mb-3">
             개발용 빠른 로그인
           </div>
           <div className="flex space-x-2">
             <button
               onClick={() => quickLogin('admin')}
-              className="flex-1 py-2 px-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+              disabled={loading}
+              className="flex-1 py-2 px-3 text-sm font-medium text-white bg-gray-800/50 border border-gray-600 rounded-lg hover:bg-gray-700/50 transition-colors duration-200 disabled:opacity-50"
             >
               Admin
             </button>
             <button
               onClick={() => quickLogin('user')}
-              className="flex-1 py-2 px-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+              disabled={loading}
+              className="flex-1 py-2 px-3 text-sm font-medium text-white bg-gray-800/50 border border-gray-600 rounded-lg hover:bg-gray-700/50 transition-colors duration-200 disabled:opacity-50"
             >
               User
             </button>

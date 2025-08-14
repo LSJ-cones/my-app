@@ -59,8 +59,14 @@ public class CommentService {
 
         User currentUser = getCurrentUser();
         
+        // 멘션 처리
+        String content = requestDto.getContent();
+        if (requestDto.getMentionUsername() != null && !requestDto.getMentionUsername().trim().isEmpty()) {
+            content = "@" + requestDto.getMentionUsername() + " " + content;
+        }
+        
         Comment comment = Comment.builder()
-                .content(requestDto.getContent())
+                .content(content)
                 .post(post)
                 .user(currentUser)
                 .author(currentUser.getUsername())
@@ -83,10 +89,12 @@ public class CommentService {
             // 대댓글인 경우
             Comment parentComment = commentRepository.findById(requestDto.getParentId()).orElse(null);
             if (parentComment != null) {
+                System.out.println("🔔 대댓글 알림 생성 시도: 댓글 ID=" + savedComment.getId() + ", 부모 댓글 작성자=" + parentComment.getAuthor());
                 notificationService.createReplyNotification(savedComment, parentComment);
             }
         } else {
             // 일반 댓글인 경우
+            System.out.println("🔔 댓글 알림 생성 시도: 댓글 ID=" + savedComment.getId() + ", 게시글 작성자=" + post.getAuthor());
             notificationService.createCommentNotification(savedComment, post);
         }
         

@@ -17,4 +17,6 @@ public class FileResponseDto {
     private String fileType;
     private Long fileSize;
     private LocalDateTime createdAt;
+    private String url;
+    private String name;
 }

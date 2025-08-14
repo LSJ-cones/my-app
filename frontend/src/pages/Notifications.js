@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Bell, MessageSquare, Heart, User, Clock, Trash2, Eye, EyeOff, Filter, Search } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
+import api from '../services/api';
 
 const Notifications = () => {
   const { user } = useAuth();
@@ -11,69 +12,56 @@ const Notifications = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    // 모의 알림 데이터
-    const mockNotifications = [
-      {
-        id: 1,
-        type: 'comment',
-        message: '귀하의 게시글 "Spring Boot 시작하기"에 새로운 댓글이 달렸습니다.',
-        isRead: false,
-        createdAt: new Date(Date.now() - 1000 * 60 * 30), // 30분 전
-        icon: '💬'
-      },
-      {
-        id: 2,
-        type: 'like',
-        message: '게시글 "React Hooks 완벽 가이드"에 좋아요가 추가되었습니다.',
-        isRead: false,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2시간 전
-        icon: '❤️'
-      },
-      {
-        id: 3,
-        type: 'follow',
-        message: '새로운 팔로워가 생겼습니다: "개발자김철수"',
-        isRead: true,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1일 전
-        icon: '👤'
-      },
-      {
-        id: 4,
-        type: 'system',
-        message: '시스템 점검이 완료되었습니다. 모든 기능이 정상 작동합니다.',
-        isRead: true,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2일 전
-        icon: '⚙️'
-      },
-      {
-        id: 5,
-        type: 'comment',
-        message: '댓글 "정말 유용한 정보네요!"에 답글이 달렸습니다.',
-        isRead: false,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3일 전
-        icon: '💬'
-      }
-    ];
-    setNotifications(mockNotifications);
-    setLoading(false);
+    fetchNotifications();
   }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/notifications', {
+        params: {
+          page: 0,
+          size: 50,
+          sortBy: 'createdAt',
+          sortDirection: 'desc'
+        }
+      });
+      
+      if (response.data && response.data.content) {
+        setNotifications(response.data.content);
+      } else {
+        setNotifications([]);
+      }
+    } catch (error) {
+      console.error('알림 조회 실패:', error);
+      toast.error('알림을 불러오는데 실패했습니다.');
+      setNotifications([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getNotificationIcon = (type) => {
     switch (type) {
-      case 'comment':
+      case 'COMMENT':
         return <MessageSquare className="w-5 h-5 text-blue-400" />;
-      case 'like':
+      case 'REPLY':
+        return <MessageSquare className="w-5 h-5 text-blue-400" />;
+      case 'LIKE':
         return <Heart className="w-5 h-5 text-red-400" />;
-      case 'follow':
-        return <User className="w-5 h-5 text-green-400" />;
-      case 'system':
+      case 'POST_LIKE':
+        return <Heart className="w-5 h-5 text-red-400" />;
+      case 'POST_UPDATE':
+        return <Bell className="w-5 h-5 text-yellow-400" />;
+      case 'SYSTEM':
         return <Bell className="w-5 h-5 text-yellow-400" />;
       default:
         return <Bell className="w-5 h-5 text-gray-400" />;
     }
   };
 
-  const getTimeAgo = (date) => {
+  const getTimeAgo = (dateString) => {
+    const date = new Date(dateString);
     const now = new Date();
     const diffInMs = now - date;
     const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
@@ -87,40 +75,58 @@ const Notifications = () => {
     return date.toLocaleDateString('ko-KR');
   };
 
-  const markAsRead = (id) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id 
-          ? { ...notification, isRead: true }
-          : notification
-      )
-    );
-    toast.success('알림을 읽음 처리했습니다.');
+  const markAsRead = async (id) => {
+    try {
+      await api.put(`/notifications/${id}/read`);
+      setNotifications(prev => 
+        prev.map(notification => 
+          notification.id === id 
+            ? { ...notification, status: 'READ' }
+            : notification
+        )
+      );
+      toast.success('알림을 읽음 처리했습니다.');
+    } catch (error) {
+      console.error('알림 읽음 처리 실패:', error);
+      toast.error('알림 읽음 처리에 실패했습니다.');
+    }
   };
 
-  const deleteNotification = (id) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
-    toast.success('알림을 삭제했습니다.');
+  const deleteNotification = async (id) => {
+    try {
+      await api.delete(`/notifications/${id}`);
+      setNotifications(prev => prev.filter(notification => notification.id !== id));
+      toast.success('알림을 삭제했습니다.');
+    } catch (error) {
+      console.error('알림 삭제 실패:', error);
+      toast.error('알림 삭제에 실패했습니다.');
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, isRead: true }))
-    );
-    toast.success('모든 알림을 읽음 처리했습니다.');
+  const markAllAsRead = async () => {
+    try {
+      await api.put('/notifications/read-all');
+      setNotifications(prev => 
+        prev.map(notification => ({ ...notification, status: 'READ' }))
+      );
+      toast.success('모든 알림을 읽음 처리했습니다.');
+    } catch (error) {
+      console.error('모든 알림 읽음 처리 실패:', error);
+      toast.error('모든 알림 읽음 처리에 실패했습니다.');
+    }
   };
 
   const filteredNotifications = notifications.filter(notification => {
     const matchesFilter = filter === 'all' || 
-      (filter === 'unread' && !notification.isRead) ||
-      (filter === 'read' && notification.isRead);
+      (filter === 'unread' && notification.status === 'UNREAD') ||
+      (filter === 'read' && notification.status === 'READ');
     
-    const matchesSearch = notification.message.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = notification.content.toLowerCase().includes(searchTerm.toLowerCase());
     
     return matchesFilter && matchesSearch;
   });
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter(n => n.status === 'UNREAD').length;
 
   if (!user) {
     return (
@@ -215,13 +221,13 @@ const Notifications = () => {
               <div
                 key={notification.id}
                 className={`glass-dark p-6 rounded-2xl transition-all duration-200 hover:shadow-demon-lg ${
-                  !notification.isRead ? 'border-l-4 border-red-400 bg-red-500/5' : ''
+                  notification.status === 'UNREAD' ? 'border-l-4 border-red-400 bg-red-500/5' : ''
                 }`}
               >
                 <div className="flex items-start space-x-4">
                   <div className="flex-shrink-0">
                     <div className={`p-3 rounded-xl ${
-                      !notification.isRead ? 'bg-red-500/20' : 'bg-gray-700/50'
+                      notification.status === 'UNREAD' ? 'bg-red-500/20' : 'bg-gray-700/50'
                     }`}>
                       {getNotificationIcon(notification.type)}
                     </div>
@@ -231,16 +237,16 @@ const Notifications = () => {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <p className={`text-sm font-medium ${
-                          !notification.isRead ? 'text-white' : 'text-gray-300'
+                          notification.status === 'UNREAD' ? 'text-white' : 'text-gray-300'
                         }`}>
-                          {notification.message}
+                          {notification.content}
                         </p>
                         <div className="flex items-center space-x-4 mt-2">
                           <div className="flex items-center space-x-1 text-gray-400">
                             <Clock className="w-4 h-4" />
                             <span className="text-sm">{getTimeAgo(notification.createdAt)}</span>
                           </div>
-                          {!notification.isRead && (
+                          {notification.status === 'UNREAD' && (
                             <span className="px-2 py-1 bg-red-500/20 text-red-400 rounded-full text-xs">
                               새 알림
                             </span>
@@ -249,7 +255,7 @@ const Notifications = () => {
                       </div>
                       
                       <div className="flex items-center space-x-2 ml-4">
-                        {!notification.isRead && (
+                        {notification.status === 'UNREAD' && (
                           <button
                             onClick={() => markAsRead(notification.id)}
                             className="p-2 text-gray-400 hover:text-blue-400 transition-colors duration-200"

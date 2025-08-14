@@ -75,10 +75,11 @@ public class FileController {
     })
     @GetMapping("/download/{fileId}")
     public ResponseEntity<Resource> downloadFile(@PathVariable Long fileId) throws IOException {
+        FileResponseDto fileInfo = fileService.getFileInfo(fileId);
         Resource resource = fileService.downloadFile(fileId);
         
-        // 파일명 인코딩
-        String filename = URLEncoder.encode(resource.getFilename(), StandardCharsets.UTF_8)
+        // 원본 파일명 인코딩
+        String filename = URLEncoder.encode(fileInfo.getOriginalFileName(), StandardCharsets.UTF_8)
                 .replaceAll("\\+", "%20");
         
         return ResponseEntity.ok()
@@ -135,6 +136,10 @@ public class FileController {
 
     private String getCurrentUsername() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
+            // 임시로 admin 사용자 반환 (테스트용)
+            return "admin";
+        }
         return authentication.getName();
     }
 }

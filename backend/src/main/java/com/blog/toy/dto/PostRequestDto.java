@@ -16,5 +16,6 @@ public class PostRequestDto {
     private String author;
     private Long categoryId;
     private List<String> tagNames;
+    private List<Long> fileIds;
     private Post.PostStatus status = Post.PostStatus.DRAFT;
 }

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, X, FileText, Code, Database, Zap, Cloud, BookOpen, Upload, File, X as XIcon } from 'lucide-react';
+import { ArrowLeft, Save, X, FileText, Code, Database, Zap, Cloud, BookOpen, Upload, File, X as XIcon, Plus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
@@ -11,18 +11,32 @@ const CreatePost = () => {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    category: 'JAVA'
+    categoryId: ''
   });
   const [submitting, setSubmitting] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [newCategory, setNewCategory] = useState({ name: '', description: '' });
 
-  const categories = [
-    { id: 'JAVA', name: 'Java', icon: <Code className="w-4 h-4" /> },
-    { id: 'SPRING', name: 'Spring', icon: <Database className="w-4 h-4" /> },
-    { id: 'JAVASCRIPT', name: 'JavaScript', icon: <Zap className="w-4 h-4" /> },
-    { id: 'REACT', name: 'React', icon: <Cloud className="w-4 h-4" /> }
-  ];
+  // 카테고리 목록 가져오기
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await api.get('/categories');
+        setCategories(response.data);
+        // 첫 번째 카테고리를 기본값으로 설정
+        if (response.data.length > 0 && !formData.categoryId) {
+          setFormData(prev => ({ ...prev, categoryId: response.data[0].id }));
+        }
+      } catch (error) {
+        console.error('카테고리 목록 로드 실패:', error);
+        toast.error('카테고리 목록을 불러오는데 실패했습니다.');
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -30,6 +44,29 @@ const CreatePost = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  // 카테고리 생성
+  const handleCreateCategory = async () => {
+    if (!newCategory.name.trim()) {
+      toast.error('카테고리명을 입력해주세요.');
+      return;
+    }
+
+    try {
+      const response = await api.post('/categories', {
+        name: newCategory.name,
+        description: newCategory.description
+      });
+      
+      toast.success('카테고리가 생성되었습니다.');
+      setCategories(prev => [...prev, response.data]);
+      setNewCategory({ name: '', description: '' });
+      setShowCategoryModal(false);
+    } catch (error) {
+      console.error('카테고리 생성 실패:', error);
+      toast.error('카테고리 생성에 실패했습니다.');
+    }
   };
 
   const handleFileUpload = async (e) => {
@@ -150,7 +187,7 @@ const CreatePost = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-8">
       <div className="max-w-4xl mx-auto px-4">
         {/* 헤더 */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center mb-8">
           <button
             onClick={handleCancel}
             className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors duration-200"
@@ -158,24 +195,6 @@ const CreatePost = () => {
             <ArrowLeft className="w-5 h-5" />
             <span>뒤로가기</span>
           </button>
-          
-          <div className="flex space-x-3">
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Save className="w-4 h-4" />
-              <span>{submitting ? '작성 중...' : '게시글 작성'}</span>
-            </button>
-            <button
-              onClick={handleCancel}
-              className="btn-secondary flex items-center space-x-2"
-            >
-              <X className="w-4 h-4" />
-              <span>취소</span>
-            </button>
-          </div>
         </div>
 
         {/* 폼 */}
@@ -202,20 +221,32 @@ const CreatePost = () => {
 
             {/* 카테고리 선택 */}
             <div>
-              <label className="block text-white font-medium mb-3">카테고리</label>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-white font-medium">카테고리</label>
+                {user?.role === 'ADMIN' && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCategoryModal(true)}
+                    className="flex items-center space-x-1 text-red-400 hover:text-red-300 transition-colors duration-200"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span className="text-sm">카테고리 추가</span>
+                  </button>
+                )}
+              </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {categories.map((category) => (
                   <button
                     key={category.id}
                     type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, category: category.id }))}
+                    onClick={() => setFormData(prev => ({ ...prev, categoryId: category.id }))}
                     className={`flex items-center space-x-2 p-3 rounded-xl border transition-all duration-200 ${
-                      formData.category === category.id
+                      formData.categoryId === category.id
                         ? 'bg-red-600 text-white border-red-600 shadow-lg'
                         : 'bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700 hover:border-red-500'
                     }`}
                   >
-                    {category.icon}
+                    <BookOpen className="w-4 h-4" />
                     <span className="font-medium">{category.name}</span>
                   </button>
                 ))}
@@ -294,6 +325,25 @@ const CreatePost = () => {
                 {formData.content.length}/5000
               </div>
             </div>
+
+            {/* 작성 버튼 */}
+            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-700">
+              <button
+                onClick={handleCancel}
+                className="btn-secondary flex items-center space-x-2"
+              >
+                <X className="w-4 h-4" />
+                <span>취소</span>
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save className="w-4 h-4" />
+                <span>{submitting ? '작성 중...' : '게시글 작성'}</span>
+              </button>
+            </div>
           </form>
 
           {/* 작성 팁 */}
@@ -308,6 +358,53 @@ const CreatePost = () => {
           </div>
         </div>
       </div>
+
+      {/* 카테고리 생성 모달 */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold text-white mb-4">새 카테고리 생성</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-white font-medium mb-2">카테고리명</label>
+                <input
+                  type="text"
+                  value={newCategory.name}
+                  onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="카테고리명을 입력하세요"
+                  className="input-field w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-white font-medium mb-2">설명 (선택사항)</label>
+                <textarea
+                  value={newCategory.description}
+                  onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="카테고리 설명을 입력하세요"
+                  className="input-field w-full h-20 resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex space-x-3 mt-6">
+              <button
+                onClick={handleCreateCategory}
+                className="flex-1 btn-primary"
+              >
+                생성
+              </button>
+              <button
+                onClick={() => {
+                  setShowCategoryModal(false);
+                  setNewCategory({ name: '', description: '' });
+                }}
+                className="flex-1 btn-secondary"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

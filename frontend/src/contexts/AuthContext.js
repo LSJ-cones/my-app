@@ -18,13 +18,20 @@ export const AuthProvider = ({ children }) => {
   // 로그인 상태 확인
   const checkAuthStatus = async () => {
     try {
-      // 현재는 간단하게 localStorage에서 사용자 정보를 가져옴
+      // localStorage에서 사용자 정보와 토큰을 가져옴
       const savedUser = localStorage.getItem('user');
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
+      const savedToken = localStorage.getItem('token');
+      
+      if (savedUser && savedToken) {
+        const parsedUser = JSON.parse(savedUser);
+        if (parsedUser && typeof parsedUser === 'object') {
+          setUser(parsedUser);
+        }
       }
     } catch (error) {
       console.error('인증 상태 확인 실패:', error);
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
     } finally {
       setLoading(false);
     }
@@ -33,12 +40,21 @@ export const AuthProvider = ({ children }) => {
   // 로그인
   const login = async (credentials) => {
     try {
-      // 실제 로그인 API 호출 (현재는 임시)
+      // 실제 로그인 API 호출
       const response = await api.post('/auth/login', credentials);
-      const userData = response.data;
+      const { token, id, username, email, name, role } = response.data;
+      
+      const userData = {
+        id: id,
+        username: username,
+        email: email,
+        name: name,
+        role: role
+      };
       
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('token', token);
       return { success: true };
     } catch (error) {
       console.error('로그인 실패:', error);
@@ -50,12 +66,16 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
   };
 
   // 임시 로그인 (개발용)
   const tempLogin = (userData) => {
+    // 개발용 임시 토큰 생성
+    const tempToken = 'temp_token_' + Date.now();
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('token', tempToken);
   };
 
   useEffect(() => {

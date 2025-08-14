@@ -30,6 +30,13 @@ const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
+  const [advancedSearchData, setAdvancedSearchData] = useState({
+    keyword: '',
+    categoryId: '',
+    tagNames: '',
+    status: 'DRAFT'
+  });
 
   useEffect(() => {
     fetchPosts();
@@ -40,7 +47,23 @@ const Home = () => {
       setLoading(true);
       let response;
       
-      if (searchQuery.trim()) {
+      if (showAdvancedSearch && (advancedSearchData.keyword || advancedSearchData.categoryId || advancedSearchData.tagNames)) {
+        // 고급 검색 API 사용
+        const searchParams = {
+          page: currentPage,
+          size: 10,
+          ...advancedSearchData
+        };
+        
+        // 빈 값 제거
+        Object.keys(searchParams).forEach(key => {
+          if (searchParams[key] === '' || searchParams[key] === null) {
+            delete searchParams[key];
+          }
+        });
+        
+        response = await api.post('/posts/advanced-search', searchParams);
+      } else if (searchQuery.trim()) {
         // 검색 API 사용
         response = await api.get('/posts/search', {
           params: {
@@ -68,7 +91,7 @@ const Home = () => {
         });
       }
       
-      setPosts(response.data.content || response.data);
+      setPosts(response.data.content || response.data || []);
       setTotalPages(response.data.totalPages || 0);
       setTotalElements(response.data.totalElements || 0);
     } catch (error) {
@@ -123,14 +146,12 @@ const Home = () => {
 
   const getCategoryIcon = (category) => {
     switch (category) {
-      case 'JAVA':
+      case 'Java':
         return <Code className="w-4 h-4" />;
-      case 'SPRING':
+      case 'Spring Boot':
         return <Database className="w-4 h-4" />;
-      case 'JAVASCRIPT':
+      case 'Web Development':
         return <Zap className="w-4 h-4" />;
-      case 'REACT':
-        return <Cloud className="w-4 h-4" />;
       default:
         return <BookOpen className="w-4 h-4" />;
     }
@@ -138,14 +159,12 @@ const Home = () => {
 
   const getCategoryColor = (category) => {
     switch (category) {
-      case 'JAVA':
+      case 'Java':
         return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
-      case 'SPRING':
+      case 'Spring Boot':
         return 'bg-green-500/20 text-green-400 border-green-500/30';
-      case 'JAVASCRIPT':
+      case 'Web Development':
         return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-      case 'REACT':
-        return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
       default:
         return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
     }
@@ -153,10 +172,9 @@ const Home = () => {
 
   const categories = [
     { id: 'all', name: '전체', icon: <BookOpen className="w-4 h-4" /> },
-    { id: 'JAVA', name: 'Java', icon: <Code className="w-4 h-4" /> },
-    { id: 'SPRING', name: 'Spring', icon: <Database className="w-4 h-4" /> },
-    { id: 'JAVASCRIPT', name: 'JavaScript', icon: <Zap className="w-4 h-4" /> },
-    { id: 'REACT', name: 'React', icon: <Cloud className="w-4 h-4" /> }
+    { id: 'Java', name: 'Java', icon: <Code className="w-4 h-4" /> },
+    { id: 'Spring Boot', name: 'Spring Boot', icon: <Database className="w-4 h-4" /> },
+    { id: 'Web Development', name: 'Web Development', icon: <Zap className="w-4 h-4" /> }
   ];
 
   // 페이지 번호 배열 생성
@@ -207,7 +225,7 @@ const Home = () => {
               </span>
             </h1>
             <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-              기술의 세계를 탐험하는 개발자의 기록
+              기술의 칼날
             </p>
             <div className="flex justify-center space-x-4">
               <div className="flex items-center space-x-2 text-gray-400">
@@ -269,6 +287,98 @@ const Home = () => {
             </div>
           )}
 
+          {/* 고급 검색 토글 버튼 */}
+          <div className="flex justify-between items-center">
+            <button
+              type="button"
+              onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+              className="flex items-center space-x-2 text-gray-400 hover:text-red-400 transition-colors duration-200"
+            >
+              <Search className="w-4 h-4" />
+              <span>{showAdvancedSearch ? '고급 검색 숨기기' : '고급 검색'}</span>
+            </button>
+          </div>
+
+          {/* 고급 검색 폼 */}
+          {showAdvancedSearch && (
+            <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-white mb-4">고급 검색</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">키워드</label>
+                  <input
+                    type="text"
+                    value={advancedSearchData.keyword}
+                    onChange={(e) => setAdvancedSearchData(prev => ({ ...prev, keyword: e.target.value }))}
+                    placeholder="제목 또는 내용 검색"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">카테고리</label>
+                  <select
+                    value={advancedSearchData.categoryId}
+                    onChange={(e) => setAdvancedSearchData(prev => ({ ...prev, categoryId: e.target.value }))}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                  >
+                    <option value="">전체 카테고리</option>
+                    <option value="1">Spring Boot</option>
+                    <option value="2">Java</option>
+                    <option value="3">Web Development</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">태그</label>
+                  <input
+                    type="text"
+                    value={advancedSearchData.tagNames}
+                    onChange={(e) => setAdvancedSearchData(prev => ({ ...prev, tagNames: e.target.value }))}
+                    placeholder="태그명 (쉼표로 구분)"
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">상태</label>
+                  <select
+                    value={advancedSearchData.status}
+                    onChange={(e) => setAdvancedSearchData(prev => ({ ...prev, status: e.target.value }))}
+                    className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                  >
+                    <option value="DRAFT">임시저장</option>
+                    <option value="PUBLISHED">발행</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2 mt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdvancedSearchData({
+                      keyword: '',
+                      categoryId: '',
+                      tagNames: '',
+                      status: 'DRAFT'
+                    });
+                    setShowAdvancedSearch(false);
+                  }}
+                  className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200"
+                >
+                  초기화
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentPage(0);
+                    fetchPosts();
+                  }}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200"
+                >
+                  검색
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* 카테고리 필터 */}
           <div className="flex flex-wrap gap-2">
             {categories.map((category) => (
@@ -301,16 +411,16 @@ const Home = () => {
               </p>
             </div>
           ) : (
-            posts.map((post) => (
+            posts.filter(post => post && post.id).map((post) => (
               <article
                 key={post.id}
                 className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 hover:bg-gray-800/70 transition-all duration-300 hover:shadow-xl hover:shadow-red-500/10"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium border ${getCategoryColor(post.category)}`}>
-                      {getCategoryIcon(post.category)}
-                      <span>{post.category}</span>
+                    <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium border ${getCategoryColor(post.category?.name)}`}>
+                      {getCategoryIcon(post.category?.name)}
+                      <span>{post.category?.name || '기타'}</span>
                     </span>
                     <span className="text-sm text-gray-400">
                       {getTimeAgo(post.createdAt)}

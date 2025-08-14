@@ -30,6 +30,10 @@ public class Post {
 
     // 게시글 작성자
     private String author;
+    
+    // 게시글 작성자 ID
+    @Column(name = "author_id")
+    private Long authorId;
 
     // 게시글 상태 (DRAFT, PUBLISHED, ARCHIVED)
     @Enumerated(EnumType.STRING)

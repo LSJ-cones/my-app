@@ -19,4 +19,7 @@ public class CommentRequestDto {
     
     // 대댓글인 경우 부모 댓글 ID
     private Long parentId;
+    
+    // 멘션할 사용자명 (예: @username)
+    private String mentionUsername;
 }

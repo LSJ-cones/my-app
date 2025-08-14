@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import Header from './components/Header';
 import Home from './pages/Home';
 import PostDetail from './pages/PostDetail';
@@ -25,6 +26,7 @@ const AnimatedRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/notifications" element={<Notifications />} />
+      <Route path="*" element={<Home />} />
     </Routes>
   );
 };
@@ -32,38 +34,40 @@ const AnimatedRoutes = () => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-          <Header />
-          <main className="animate-fadeIn">
-            <AnimatedRoutes />
-          </main>
-          <Toaster
-            position="top-right"
-            reverseOrder={false}
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: '#1f2937',
-                color: '#f9fafb',
-                border: '1px solid #374151',
-              },
-              success: {
-                iconTheme: {
-                  primary: '#10b981',
-                  secondary: '#f9fafb',
+      <NotificationProvider>
+        <Router>
+          <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+            <Header />
+            <main className="animate-fadeIn">
+              <AnimatedRoutes />
+            </main>
+            <Toaster
+              position="top-right"
+              reverseOrder={false}
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: '#1f2937',
+                  color: '#f9fafb',
+                  border: '1px solid #374151',
                 },
-              },
-              error: {
-                iconTheme: {
-                  primary: '#ef4444',
-                  secondary: '#f9fafb',
+                success: {
+                  iconTheme: {
+                    primary: '#10b981',
+                    secondary: '#f9fafb',
+                  },
                 },
-              },
-            }}
-          />
-        </div>
-      </Router>
+                error: {
+                  iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#f9fafb',
+                  },
+                },
+              }}
+            />
+          </div>
+        </Router>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

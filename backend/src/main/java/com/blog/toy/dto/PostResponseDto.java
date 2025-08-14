@@ -19,8 +19,11 @@ public class PostResponseDto {
     private String title;
     private String content;
     private String author;
+    private Long authorId;  // 작성자 ID 추가
     private Post.PostStatus status;
     private Integer viewCount;
+    private Integer likeCount;
+    private Integer dislikeCount;
     private CategoryResponseDto category;
     private List<TagResponseDto> tags;
     private List<FileResponseDto> files;

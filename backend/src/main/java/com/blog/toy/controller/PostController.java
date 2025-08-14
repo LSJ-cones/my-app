@@ -4,10 +4,12 @@ import com.blog.toy.domain.Post;
 import com.blog.toy.dto.PageRequestDto;
 import com.blog.toy.dto.PageResponseDto;
 import com.blog.toy.dto.PostReactionDto;
+import com.blog.toy.domain.ReactionType;
 import com.blog.toy.dto.PostRequestDto;
 import com.blog.toy.dto.PostResponseDto;
 import com.blog.toy.dto.SearchRequestDto;
 import com.blog.toy.service.PostService;
+import com.blog.toy.service.PostReactionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -27,6 +29,9 @@ public class PostController {
 
     @Autowired
     private PostService postService;
+
+    @Autowired
+    private PostReactionService postReactionService;
 
     @Operation(summary = "게시글 목록 조회 (페이징)", description = "페이징을 적용한 게시글 목록을 조회합니다.")
     @ApiResponses({ @ApiResponse(responseCode = "200", description = "조회 성공"),

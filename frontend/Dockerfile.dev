@@ -1,0 +1,20 @@
+FROM node:18
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+# ✅ react-scripts에 실행 권한 부여
+RUN chmod +x node_modules/.bin/react-scripts
+
+COPY . .
+
+EXPOSE 3001
+
+# React 개발 서버가 모든 인터페이스에서 리스닝하도록 설정
+ENV HOST=0.0.0.0
+ENV PORT=3001
+
+CMD ["npm", "start"]

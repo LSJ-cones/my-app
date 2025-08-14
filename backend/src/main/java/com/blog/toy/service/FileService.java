@@ -103,6 +103,13 @@ public class FileService {
                 .collect(Collectors.toList());
     }
 
+    public FileResponseDto getFileInfo(Long fileId) {
+        File file = fileRepository.findById(fileId)
+                .orElseThrow(() -> new RuntimeException("파일을 찾을 수 없습니다: " + fileId));
+        
+        return convertToResponseDto(file);
+    }
+
     public Resource downloadFile(Long fileId) throws MalformedURLException {
         File file = fileRepository.findById(fileId)
                 .orElseThrow(() -> new RuntimeException("파일을 찾을 수 없습니다: " + fileId));
@@ -203,6 +210,8 @@ public class FileService {
                 .fileType(file.getFileType())
                 .fileSize(file.getFileSize())
                 .createdAt(file.getCreatedAt())
+                .url("/api/files/download/" + file.getId())
+                .name(file.getOriginalFileName())
                 .build();
     }
 }
