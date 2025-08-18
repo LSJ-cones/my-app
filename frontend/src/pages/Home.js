@@ -188,7 +188,7 @@ const Home = () => {
           </div>
           {user && user.role === 'ADMIN' && (
             <Link
-              to="/create"
+              to="/posts/create"
               className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" />

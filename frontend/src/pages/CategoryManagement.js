@@ -1,7 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, ChevronDown, ChevronRight, Folder, FolderOpen, Save, X } from 'lucide-react';
+import { Plus, Edit, Trash2, ChevronDown, ChevronRight, Folder, FolderOpen, Save, X, GripVertical } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
+
+// SortableItem 컴포넌트
+const SortableItem = ({ children, id }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {children}
+    </div>
+  );
+};
 
 const CategoryManagement = () => {
   const [categories, setCategories] = useState([]);
@@ -13,8 +55,7 @@ const CategoryManagement = () => {
     name: '',
     description: '',
     categoryType: 'SUB',
-    parentId: null,
-    displayOrder: 1
+    parentId: null
   });
 
   // 카테고리 데이터 로드
@@ -38,6 +79,11 @@ const CategoryManagement = () => {
   // 대분류와 소분류 분리
   const mainCategories = categories.filter(cat => cat.categoryType === 'MAIN');
   const subCategories = categories.filter(cat => cat.categoryType === 'SUB');
+  
+  // 디버깅용 로그
+  console.log('전체 카테고리:', categories);
+  console.log('대분류:', mainCategories);
+  console.log('소분류:', subCategories);
 
   // 카테고리 확장/축소 토글
   const toggleExpanded = (categoryId) => {
@@ -54,7 +100,9 @@ const CategoryManagement = () => {
 
   // 대분류별 소분류 그룹핑
   const getSubCategories = (mainCategoryId) => {
-    return subCategories.filter(cat => cat.parentId === mainCategoryId);
+    const subs = subCategories.filter(cat => cat.parentId === mainCategoryId);
+    console.log(`대분류 ${mainCategoryId}의 소분류:`, subs);
+    return subs;
   };
 
   // 폼 데이터 초기화
@@ -63,8 +111,7 @@ const CategoryManagement = () => {
       name: '',
       description: '',
       categoryType: 'SUB',
-      parentId: null,
-      displayOrder: 1
+      parentId: null
     });
   };
 
@@ -123,8 +170,7 @@ const CategoryManagement = () => {
       name: category.name,
       description: category.description || '',
       categoryType: category.categoryType,
-      parentId: category.parentId,
-      displayOrder: category.displayOrder || 1
+      parentId: category.parentId
     });
   };
 
@@ -132,6 +178,46 @@ const CategoryManagement = () => {
   const cancelEditing = () => {
     setEditingId(null);
     resetForm();
+  };
+
+  // 센서 설정
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // 드래그 앤 드롭 핸들러
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over.id) {
+      try {
+        // 드래그된 카테고리 ID 가져오기
+        const draggedCategoryId = parseInt(active.id);
+        
+        // 현재 순서에서 새로운 순서로 이동하는 로직
+        const oldIndex = mainCategories.findIndex(cat => cat.id.toString() === active.id);
+        const newIndex = mainCategories.findIndex(cat => cat.id.toString() === over.id);
+        
+        // 새로운 순서 계산 (드롭 위치 + 1)
+        const newOrder = newIndex + 1;
+        
+        console.log('드래그된 카테고리:', active.id, '기존 인덱스:', oldIndex, '새 인덱스:', newIndex, '새 순서:', newOrder);
+        
+        // API 호출하여 순서 업데이트
+        await api.put(`/categories/${draggedCategoryId}/reorder`, {
+          newDisplayOrder: newOrder
+        });
+        
+        toast.success('카테고리 순서가 변경되었습니다.');
+        fetchCategories(); // 카테고리 목록 새로고침
+      } catch (error) {
+        console.error('카테고리 순서 변경 실패:', error);
+        toast.error('카테고리 순서 변경에 실패했습니다.');
+      }
+    }
   };
 
   if (loading) {
@@ -149,7 +235,7 @@ const CategoryManagement = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">카테고리 관리</h1>
-            <p className="text-gray-400">블로그의 카테고리를 관리합니다.</p>
+            <p className="text-gray-400">블로그의 카테고리를 관리합니다. 드래그하여 순서를 변경할 수 있습니다.</p>
           </div>
           <button
             onClick={() => setShowCreateForm(true)}
@@ -164,192 +250,196 @@ const CategoryManagement = () => {
         <div className="bg-gray-800/50 rounded-xl p-6">
           <h2 className="text-xl font-semibold text-white mb-4">카테고리 구조</h2>
           
-          <div className="space-y-2">
-            {mainCategories.map((mainCategory) => {
-              const isExpanded = expandedCategories.has(mainCategory.id);
-              const subCats = getSubCategories(mainCategory.id);
-              const isEditing = editingId === mainCategory.id;
-              
-              return (
-                <div key={mainCategory.id} className="border border-gray-700 rounded-lg">
-                  {/* 대분류 */}
-                  <div className="flex items-center justify-between p-4 bg-gray-700/30">
-                    <div className="flex items-center space-x-3">
-                      <button
-                        onClick={() => toggleExpanded(mainCategory.id)}
-                        className="p-1 hover:bg-gray-600/50 rounded"
-                      >
-                        {isExpanded ? (
-                          <ChevronDown className="w-4 h-4 text-gray-400" />
-                        ) : (
-                          <ChevronRight className="w-4 h-4 text-gray-400" />
-                        )}
-                      </button>
-                      <div className={`p-2 rounded-lg ${isExpanded ? 'bg-red-500/20' : 'bg-gray-600/50'}`}>
-                        {isExpanded ? (
-                          <FolderOpen className="w-4 h-4 text-red-400" />
-                        ) : (
-                          <Folder className="w-4 h-4 text-gray-400" />
-                        )}
-                      </div>
-                      <div>
-                        <div className="font-medium text-white">{mainCategory.name}</div>
-                        <div className="text-sm text-gray-400">{subCats.length}개 하위 카테고리</div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      {isEditing ? (
-                        <>
-                          <button
-                            onClick={() => handleUpdate(mainCategory.id, formData)}
-                            className="p-2 text-green-400 hover:bg-green-400/10 rounded"
-                          >
-                            <Save className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={cancelEditing}
-                            className="p-2 text-gray-400 hover:bg-gray-600/50 rounded"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => startEditing(mainCategory)}
-                            className="p-2 text-blue-400 hover:bg-blue-400/10 rounded"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(mainCategory.id)}
-                            className="p-2 text-red-400 hover:bg-red-400/10 rounded"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 편집 폼 */}
-                  {isEditing && (
-                    <div className="p-4 bg-gray-700/20 border-t border-gray-700">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input
-                          type="text"
-                          value={formData.name}
-                          onChange={(e) => setFormData({...formData, name: e.target.value})}
-                          placeholder="카테고리명"
-                          className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
-                        />
-                        <input
-                          type="text"
-                          value={formData.description}
-                          onChange={(e) => setFormData({...formData, description: e.target.value})}
-                          placeholder="설명"
-                          className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
-                        />
-                        <input
-                          type="number"
-                          value={formData.displayOrder}
-                          onChange={(e) => setFormData({...formData, displayOrder: parseInt(e.target.value)})}
-                          placeholder="표시 순서"
-                          className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 소분류 목록 */}
-                  {isExpanded && (
-                    <div className="border-t border-gray-700">
-                      {subCats.map((subCategory) => {
-                        const isSubEditing = editingId === subCategory.id;
-                        
-                        return (
-                          <div key={subCategory.id} className="flex flex-col p-4 bg-gray-800/30 border-b border-gray-700 last:border-b-0">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-3 ml-8">
-                                <div className="p-1.5 rounded bg-gray-600/50">
-                                  <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                                </div>
-                                <div>
-                                  <div className="font-medium text-white">{subCategory.name}</div>
-                                  <div className="text-sm text-gray-400">{subCategory.postCount || 0}개 글</div>
-                                </div>
-                              </div>
-                              
-                              <div className="flex items-center space-x-2">
-                                {isSubEditing ? (
-                                  <>
-                                    <button
-                                      onClick={() => handleUpdate(subCategory.id, formData)}
-                                      className="p-2 text-green-400 hover:bg-green-400/10 rounded"
-                                    >
-                                      <Save className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={cancelEditing}
-                                      className="p-2 text-gray-400 hover:bg-gray-600/50 rounded"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <button
-                                      onClick={() => startEditing(subCategory)}
-                                      className="p-2 text-blue-400 hover:bg-blue-400/10 rounded"
-                                    >
-                                      <Edit className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDelete(subCategory.id)}
-                                      className="p-2 text-red-400 hover:bg-red-400/10 rounded"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </>
-                                )}
-                              </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={mainCategories.map(cat => cat.id.toString())}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-2">
+                {mainCategories.map((mainCategory, index) => {
+                  const isExpanded = expandedCategories.has(mainCategory.id);
+                  const subCats = getSubCategories(mainCategory.id);
+                  const isEditing = editingId === mainCategory.id;
+                  
+                  return (
+                    <SortableItem key={mainCategory.id} id={mainCategory.id.toString()}>
+                      <div className="border border-gray-700 rounded-lg">
+                        {/* 대분류 */}
+                        <div className="flex items-center justify-between p-4 bg-gray-700/30">
+                          <div className="flex items-center space-x-3">
+                            {/* 드래그 핸들 */}
+                            <div className="p-1 hover:bg-gray-600/50 rounded cursor-grab active:cursor-grabbing">
+                              <GripVertical className="w-4 h-4 text-gray-400" />
                             </div>
-
-                            {isSubEditing && (
-                              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 ml-8">
-                                <input
-                                  type="text"
-                                  value={formData.name}
-                                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                  placeholder="카테고리명"
-                                  className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
-                                />
-                                <input
-                                  type="text"
-                                  value={formData.description}
-                                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                                  placeholder="설명"
-                                  className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
-                                />
-                                <input
-                                  type="number"
-                                  value={formData.displayOrder}
-                                  onChange={(e) => setFormData({...formData, displayOrder: parseInt(e.target.value)})}
-                                  placeholder="표시 순서"
-                                  className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
-                                />
-                              </div>
+                            
+                            <button
+                              onClick={() => toggleExpanded(mainCategory.id)}
+                              className="p-1 hover:bg-gray-600/50 rounded"
+                            >
+                              {isExpanded ? (
+                                <ChevronDown className="w-4 h-4 text-gray-400" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4 text-gray-400" />
+                              )}
+                            </button>
+                            <div className={`p-2 rounded-lg ${isExpanded ? 'bg-red-500/20' : 'bg-gray-600/50'}`}>
+                              {isExpanded ? (
+                                <FolderOpen className="w-4 h-4 text-red-400" />
+                              ) : (
+                                <Folder className="w-4 h-4 text-gray-400" />
+                              )}
+                            </div>
+                            <div>
+                              <div className="font-medium text-white">{mainCategory.name}</div>
+                              <div className="text-sm text-gray-400">{subCats.length}개 하위 카테고리</div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            {isEditing ? (
+                              <>
+                                <button
+                                  onClick={() => handleUpdate(mainCategory.id, formData)}
+                                  className="p-2 text-green-400 hover:bg-green-400/10 rounded"
+                                >
+                                  <Save className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={cancelEditing}
+                                  className="p-2 text-gray-400 hover:bg-gray-600/50 rounded"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => startEditing(mainCategory)}
+                                  className="p-2 text-blue-400 hover:bg-blue-400/10 rounded"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(mainCategory.id)}
+                                  className="p-2 text-red-400 hover:bg-red-400/10 rounded"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </>
                             )}
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                        </div>
+
+                        {/* 편집 폼 */}
+                        {isEditing && (
+                          <div className="p-4 bg-gray-700/20 border-t border-gray-700">
+                            <div className="space-y-3">
+                              <input
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                placeholder="카테고리명"
+                                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                              />
+                              <input
+                                type="text"
+                                value={formData.description}
+                                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                placeholder="설명 (선택사항)"
+                                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 소분류 목록 */}
+                        {isExpanded && (
+                          <div className="border-t border-gray-700">
+                            {subCats.map((subCategory) => {
+                              const isSubEditing = editingId === subCategory.id;
+                              
+                              return (
+                                <div key={subCategory.id} className="flex flex-col p-4 bg-gray-800/30 border-b border-gray-700 last:border-b-0">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-3 ml-8">
+                                      <div className="p-1.5 rounded bg-gray-600/50">
+                                        <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                                      </div>
+                                      <div>
+                                        <div className="font-medium text-white">{subCategory.name}</div>
+                                        <div className="text-sm text-gray-400">{subCategory.postCount || 0}개 글</div>
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center space-x-2">
+                                      {isSubEditing ? (
+                                        <>
+                                          <button
+                                            onClick={() => handleUpdate(subCategory.id, formData)}
+                                            className="p-2 text-green-400 hover:bg-green-400/10 rounded"
+                                          >
+                                            <Save className="w-4 h-4" />
+                                          </button>
+                                          <button
+                                            onClick={cancelEditing}
+                                            className="p-2 text-gray-400 hover:bg-gray-600/50 rounded"
+                                          >
+                                            <X className="w-4 h-4" />
+                                          </button>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <button
+                                            onClick={() => startEditing(subCategory)}
+                                            className="p-2 text-blue-400 hover:bg-blue-400/10 rounded"
+                                          >
+                                            <Edit className="w-4 h-4" />
+                                          </button>
+                                          <button
+                                            onClick={() => handleDelete(subCategory.id)}
+                                            className="p-2 text-red-400 hover:bg-red-400/10 rounded"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </button>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {isSubEditing && (
+                                    <div className="mt-4 space-y-3 ml-8">
+                                      <input
+                                        type="text"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                        placeholder="카테고리명"
+                                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                                      />
+                                      <input
+                                        type="text"
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                        placeholder="설명 (선택사항)"
+                                        className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </SortableItem>
+                  );
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
 
         {/* 새 카테고리 생성 모달 */}
@@ -405,16 +495,6 @@ const CategoryManagement = () => {
                     value={formData.description}
                     onChange={(e) => setFormData({...formData, description: e.target.value})}
                     placeholder="카테고리 설명 (선택사항)"
-                    className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">표시 순서</label>
-                  <input
-                    type="number"
-                    value={formData.displayOrder}
-                    onChange={(e) => setFormData({...formData, displayOrder: parseInt(e.target.value)})}
                     className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white"
                   />
                 </div>

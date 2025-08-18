@@ -468,6 +468,31 @@ const PostDetail = () => {
     }
   };
 
+  // 댓글 반응 처리
+  const handleCommentReaction = async (commentId, reactionType) => {
+    try {
+      const response = await api.post(`/comments/${commentId}/reaction`, {
+        reactionType: reactionType
+      });
+      
+      if (response.data) {
+        // 댓글 목록 새로고침
+        await fetchComments();
+        
+        // 알림 표시
+        const reactionText = reactionType === 'LIKE' ? '좋아요' : '싫어요';
+        toast.success(`댓글에 ${reactionText}를 눌렀습니다.`);
+      }
+    } catch (error) {
+      console.error('댓글 반응 처리 실패:', error);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('반응 처리에 실패했습니다.');
+      }
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return '';
     try {
@@ -587,11 +612,17 @@ const PostDetail = () => {
             
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <button className="flex items-center space-x-1 text-gray-400 hover:text-red-400 transition-colors duration-200">
+                <button 
+                  onClick={() => handleCommentReaction(comment.id, 'LIKE')}
+                  className="flex items-center space-x-1 text-gray-400 hover:text-red-400 transition-colors duration-200"
+                >
                   <ThumbsUp className="w-4 h-4" />
                   <span className="text-sm">{comment.likeCount || 0}</span>
                 </button>
-                <button className="flex items-center space-x-1 text-gray-400 hover:text-blue-400 transition-colors duration-200">
+                <button 
+                  onClick={() => handleCommentReaction(comment.id, 'DISLIKE')}
+                  className="flex items-center space-x-1 text-gray-400 hover:text-blue-400 transition-colors duration-200"
+                >
                   <ThumbsDown className="w-4 h-4" />
                   <span className="text-sm">{comment.dislikeCount || 0}</span>
                 </button>

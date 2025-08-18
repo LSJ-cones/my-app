@@ -61,6 +61,11 @@ public class AuthService {
             throw new RuntimeException("이미 사용 중인 이메일입니다.");
         }
 
+        // 비밀번호 특수문자 검증
+        if (!signupRequest.getPassword().matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*")) {
+            throw new RuntimeException("비밀번호에는 특수문자가 하나 이상 포함되어야 합니다.");
+        }
+
         User user = User.builder()
                 .username(signupRequest.getUsername())
                 .email(signupRequest.getEmail())

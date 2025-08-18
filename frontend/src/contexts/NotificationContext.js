@@ -62,10 +62,34 @@ export const NotificationProvider = ({ children }) => {
               : notification
           )
         );
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        // unreadCount 재계산
+        const newUnreadCount = notifications.filter(n => n.id !== notificationId && n.status === 'UNREAD').length;
+        setUnreadCount(newUnreadCount);
       }
     } catch (error) {
       console.error('알림 읽음 처리 실패:', error);
+    }
+  };
+
+  // 모든 알림 읽음 처리
+  const markAllAsRead = async () => {
+    try {
+      const response = await fetch('/api/notifications/read-all', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        // 모든 알림을 읽음 상태로 변경
+        setNotifications(prev => 
+          prev.map(notification => ({ ...notification, status: 'READ' }))
+        );
+        setUnreadCount(0);
+      }
+    } catch (error) {
+      console.error('전체 알림 읽음 처리 실패:', error);
     }
   };
 
@@ -95,6 +119,7 @@ export const NotificationProvider = ({ children }) => {
     unreadCount,
     fetchNotifications,
     markAsRead,
+    markAllAsRead,
   };
 
   return (

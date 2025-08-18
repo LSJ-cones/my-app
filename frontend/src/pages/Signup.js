@@ -8,6 +8,7 @@ const Signup = () => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
+    name: '',
     password: '',
     confirmPassword: ''
   });
@@ -30,13 +31,25 @@ const Signup = () => {
       return false;
     }
     
-    if (formData.password.length < 6) {
-      toast.error('비밀번호는 최소 6자 이상이어야 합니다.');
+    if (formData.password.length < 9) {
+      toast.error('비밀번호는 최소 9자 이상이어야 합니다.');
+      return false;
+    }
+    
+    // 특수문자 포함 여부 확인
+    const specialCharRegex = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/;
+    if (!specialCharRegex.test(formData.password)) {
+      toast.error('비밀번호에는 특수문자가 하나 이상 포함되어야 합니다.');
       return false;
     }
     
     if (!formData.email.includes('@')) {
       toast.error('올바른 이메일 주소를 입력해주세요.');
+      return false;
+    }
+    
+    if (!formData.name.trim()) {
+      toast.error('이름을 입력해주세요.');
       return false;
     }
     
@@ -56,6 +69,7 @@ const Signup = () => {
       const response = await api.post('/auth/signup', {
         username: formData.username,
         email: formData.email,
+        name: formData.name,
         password: formData.password
       });
       
@@ -125,6 +139,22 @@ const Signup = () => {
             </div>
             
             <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-300">
+                이름
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required
+                value={formData.name}
+                onChange={handleChange}
+                className="mt-1 appearance-none relative block w-full px-3 py-3 border border-gray-600 placeholder-gray-500 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent sm:text-sm"
+                placeholder="이름을 입력하세요"
+              />
+            </div>
+            
+            <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-300">
                 비밀번호
               </label>
@@ -137,7 +167,7 @@ const Signup = () => {
                   value={formData.password}
                   onChange={handleChange}
                   className="appearance-none relative block w-full px-3 py-3 pr-10 border border-gray-600 placeholder-gray-500 text-white bg-gray-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent sm:text-sm"
-                  placeholder="비밀번호를 입력하세요 (최소 6자)"
+                  placeholder="비밀번호를 입력하세요 (최소 9자, 특수문자 포함)"
                 />
                 <button
                   type="button"

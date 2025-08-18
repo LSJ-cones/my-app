@@ -1,5 +1,6 @@
 package com.blog.toy.controller;
 
+import com.blog.toy.dto.ReorderRequestDto;
 import com.blog.toy.dto.category.CategoryRequestDto;
 import com.blog.toy.dto.category.CategoryResponseDto;
 import com.blog.toy.service.CategoryService;
@@ -114,5 +115,18 @@ public class CategoryController {
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
         categoryService.deleteCategory(id);
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "카테고리 순서 변경", description = "카테고리의 표시 순서를 변경합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "순서 변경 성공"),
+        @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음"),
+        @ApiResponse(responseCode = "403", description = "권한 부족")
+    })
+    @PutMapping("/{id}/reorder")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<CategoryResponseDto> reorderCategory(@PathVariable Long id, @RequestBody ReorderRequestDto requestDto) {
+        CategoryResponseDto response = categoryService.reorderCategory(id, requestDto.getNewDisplayOrder());
+        return ResponseEntity.ok(response);
     }
 }
