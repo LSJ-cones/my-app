@@ -7,7 +7,7 @@ echo "📁 현재 디렉토리: $(pwd)"
 
 # 기존 컨테이너 정리
 echo "📦 기존 컨테이너 정리 중..."
-docker-compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.prod.yml down
 docker system prune -f
 
 # 최신 코드 가져오기
@@ -20,7 +20,7 @@ mkdir -p uploads
 
 # 프로덕션 환경으로 빌드 및 실행
 echo "🔨 프로덕션 환경 빌드 중..."
-docker-compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml up -d --build
 
 # 배포 완료 확인
 echo "✅ 배포 완료!"
@@ -36,13 +36,13 @@ fi
 
 # 컨테이너 상태 확인
 echo "📊 컨테이너 상태:"
-docker-compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml ps
 
 # 로그 확인
 echo "📋 최근 로그 (백엔드):"
-docker-compose -f docker-compose.prod.yml logs --tail=10 backend
+docker compose -f docker-compose.prod.yml logs --tail=10 backend
 
 echo "📋 최근 로그 (프론트엔드):"
-docker-compose -f docker-compose.prod.yml logs --tail=10 web
+docker compose -f docker-compose.prod.yml logs --tail=10 web
 
 echo "🎉 배포가 완료되었습니다!"

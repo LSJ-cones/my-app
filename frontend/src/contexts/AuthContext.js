@@ -69,15 +69,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
   };
 
-  // 임시 로그인 (개발용)
-  const tempLogin = (userData) => {
-    // 개발용 임시 토큰 생성
-    const tempToken = 'temp_token_' + Date.now();
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('token', tempToken);
-  };
-
   useEffect(() => {
     checkAuthStatus();
   }, []);
@@ -87,7 +78,6 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     logout,
-    tempLogin,
     isAuthenticated: !!user
   };
 

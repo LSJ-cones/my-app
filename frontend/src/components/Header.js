@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Home,
-  Plus,
   Bell,
   User,
   Menu,
@@ -32,7 +31,6 @@ const Header = () => {
 
   const navItems = isAuthenticated ? [
     { path: '/', icon: Home, label: '홈' },
-    ...(isAdmin ? [{ path: '/posts/create', icon: Plus, label: '글쓰기' }] : []),
     { path: '/notifications', icon: Bell, label: '알림' },
     { path: '/profile', icon: User, label: '프로필' },
     ...(isAdmin ? [{ path: '/admin/categories', icon: Settings, label: '카테고리 관리' }] : []),

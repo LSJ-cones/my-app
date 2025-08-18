@@ -9,6 +9,7 @@ import PostDetail from './pages/PostDetail';
 import CreatePost from './pages/CreatePost';
 import EditPost from './pages/EditPost';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
 import CategoryManagement from './pages/CategoryManagement';
@@ -25,6 +26,7 @@ const AnimatedRoutes = () => {
       <Route path="/posts/create" element={<CreatePost />} />
       <Route path="/posts/:id/edit" element={<EditPost />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/notifications" element={<Notifications />} />
       <Route path="/admin/categories" element={<CategoryManagement />} />

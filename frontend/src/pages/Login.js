@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LogIn, Eye, EyeOff } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { LogIn, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
@@ -13,7 +13,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  const { login, tempLogin } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -28,7 +28,6 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // 실제 로그인 API 호출
       const result = await login(formData);
       if (result.success) {
         toast.success('로그인되었습니다!');
@@ -38,30 +37,6 @@ const Login = () => {
       }
     } catch (error) {
       console.error('로그인 오류:', error);
-      toast.error('로그인에 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 개발용 빠른 로그인 (실제 API 호출)
-  const quickLogin = async (username) => {
-    setLoading(true);
-    try {
-      const credentials = {
-        username: username,
-        password: username === 'admin' ? 'admin123' : 'user123'
-      };
-      
-      const result = await login(credentials);
-      if (result.success) {
-        toast.success(`${username}으로 로그인되었습니다!`);
-        navigate('/');
-      } else {
-        toast.error(result.error || '로그인에 실패했습니다.');
-      }
-    } catch (error) {
-      console.error('빠른 로그인 오류:', error);
       toast.error('로그인에 실패했습니다.');
     } finally {
       setLoading(false);
@@ -142,27 +117,18 @@ const Login = () => {
           </div>
         </form>
 
-        {/* 개발용 빠른 로그인 버튼 */}
-        <div className="mt-6">
-          <div className="text-center text-sm text-gray-400 mb-3">
-            개발용 빠른 로그인
+        {/* 회원가입 링크 */}
+        <div className="mt-6 text-center">
+          <div className="text-sm text-gray-400 mb-4">
+            계정이 없으신가요?
           </div>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => quickLogin('admin')}
-              disabled={loading}
-              className="flex-1 py-2 px-3 text-sm font-medium text-white bg-gray-800/50 border border-gray-600 rounded-lg hover:bg-gray-700/50 transition-colors duration-200 disabled:opacity-50"
-            >
-              Admin
-            </button>
-            <button
-              onClick={() => quickLogin('user')}
-              disabled={loading}
-              className="flex-1 py-2 px-3 text-sm font-medium text-white bg-gray-800/50 border border-gray-600 rounded-lg hover:bg-gray-700/50 transition-colors duration-200 disabled:opacity-50"
-            >
-              User
-            </button>
-          </div>
+          <Link
+            to="/signup"
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg hover:bg-red-400/20 hover:border-red-400/30 transition-all duration-200"
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            회원가입
+          </Link>
         </div>
       </div>
     </div>
