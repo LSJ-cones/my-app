@@ -22,6 +22,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 카테고리 관련 메소드들
     long countByCategory(Category category);
     Page<Post> findByCategory(Category category, Pageable pageable);
+    Page<Post> findByCategoryIn(List<Category> categories, Pageable pageable);
     Page<Post> findByCategoryAndStatus(Category category, Post.PostStatus status, Pageable pageable);
     
     // 태그 관련 메소드들

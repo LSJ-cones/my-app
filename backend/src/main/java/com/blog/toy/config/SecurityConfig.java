@@ -4,6 +4,7 @@ import com.blog.toy.security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -53,9 +54,14 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/swagger-ui/index.html").permitAll()
-                .requestMatchers("/api/hello").permitAll()
-                .requestMatchers("/api/**").permitAll() // 임시로 모든 API 허용
-                .anyRequest().permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/posts/**", "/api/categories/**", "/api/tags/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/posts/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/posts/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/posts/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/comments/**").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/comments/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/comments/**").authenticated()
+                .anyRequest().authenticated()
             );
 
         http.authenticationProvider(authenticationProvider());

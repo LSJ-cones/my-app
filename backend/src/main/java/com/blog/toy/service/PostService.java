@@ -219,6 +219,22 @@ public class PostService {
         return new PageResponseDto<>(postResponseDtoPage);
     }
 
+    // 다중 카테고리명으로 게시글 조회
+    public PageResponseDto<PostResponseDto> findByCategoryNames(String[] categoryNames, PageRequestDto pageRequestDto) {
+        List<Category> categories = new ArrayList<>();
+        
+        for (String categoryName : categoryNames) {
+            Category category = categoryRepository.findByName(categoryName.trim())
+                    .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryName));
+            categories.add(category);
+        }
+        
+        Page<Post> postPage = postRepository.findByCategoryIn(categories, pageRequestDto.toPageable());
+        Page<PostResponseDto> postResponseDtoPage = postPage.map(this::convertToResponseDto);
+        
+        return new PageResponseDto<>(postResponseDtoPage);
+    }
+
     // 태그별 게시글 조회
     public PageResponseDto<PostResponseDto> findByTags(List<String> tagNames, PageRequestDto pageRequestDto) {
         List<Tag> tags = tagRepository.findByNamesIn(tagNames);

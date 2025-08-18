@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -42,7 +43,7 @@ public class PostController {
             @Parameter(description = "페이지 크기", example = "10") @RequestParam(defaultValue = "10") int size,
             @Parameter(description = "정렬 기준 필드", example = "createdAt") @RequestParam(defaultValue = "createdAt") String sortBy,
             @Parameter(description = "정렬 방향 (asc/desc)", example = "desc") @RequestParam(defaultValue = "desc") String sortDirection,
-            @Parameter(description = "카테고리명", example = "JAVA") @RequestParam(required = false) String category) {
+            @Parameter(description = "카테고리명 (쉼표로 구분)", example = "JAVA,Spring Boot") @RequestParam(required = false) String categories) {
 
         PageRequestDto pageRequestDto = new PageRequestDto();
         pageRequestDto.setPage(page);
@@ -50,8 +51,16 @@ public class PostController {
         pageRequestDto.setSortBy(sortBy);
         pageRequestDto.setSortDirection(sortDirection);
 
-        if (category != null && !category.trim().isEmpty()) {
-            return postService.findByCategoryName(category, pageRequestDto);
+        if (categories != null && !categories.trim().isEmpty()) {
+            // 쉼표로 구분된 카테고리명들을 배열로 분리
+            String[] categoryNames = categories.split(",");
+            if (categoryNames.length == 1) {
+                // 단일 카테고리인 경우 기존 메서드 사용
+                return postService.findByCategoryName(categoryNames[0].trim(), pageRequestDto);
+            } else {
+                // 다중 카테고리인 경우 새로운 메서드 사용
+                return postService.findByCategoryNames(categoryNames, pageRequestDto);
+            }
         }
 
         return postService.findAllWithPaging(pageRequestDto);
@@ -78,6 +87,7 @@ public class PostController {
     @ApiResponses({ @ApiResponse(responseCode = "201", description = "생성 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터") })
     @PostMapping(consumes = "application/json", produces = "application/json")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PostResponseDto> createPost(@Valid @RequestBody PostRequestDto postRequestDto) {
         PostResponseDto response = postService.createPost(postRequestDto);
         return ResponseEntity.ok(response);
@@ -88,6 +98,7 @@ public class PostController {
             @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터") })
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<PostResponseDto> updatePost(
             @Parameter(description = "게시글 ID", example = "1") @PathVariable Long id,
             @Valid @RequestBody PostRequestDto postRequestDto) {
@@ -99,6 +110,7 @@ public class PostController {
     @ApiResponses({ @ApiResponse(responseCode = "204", description = "삭제 성공"),
             @ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음") })
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deletePost(@Parameter(description = "게시글 ID", example = "1") @PathVariable Long id) {
         postService.delete(id);
         return ResponseEntity.ok().build();

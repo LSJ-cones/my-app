@@ -75,12 +75,24 @@ const safeRender = (value, fallback = '') => {
     if (typeof value === 'number') return value.toString();
     if (typeof value === 'boolean') return value.toString();
     if (typeof value === 'object') {
+      // React에서 문제가 될 수 있는 속성들 확인
+      const dangerousKeys = ['disp', 'display', 'type', 'value', 'displayOrder'];
+      const safeValue = { ...value };
+      
+      // 위험한 키들 제거
+      dangerousKeys.forEach(key => {
+        if (key in safeValue) {
+          delete safeValue[key];
+        }
+      });
+      
       // 객체인 경우 name 속성이 있으면 사용, 없으면 fallback
-      if (value.name && typeof value.name === 'string') return value.name;
-      if (value.title && typeof value.title === 'string') return value.title;
-      if (value.id && (typeof value.id === 'string' || typeof value.id === 'number')) return value.id.toString();
+      if (safeValue.name && typeof safeValue.name === 'string') return safeValue.name;
+      if (safeValue.title && typeof safeValue.title === 'string') return safeValue.title;
+      if (safeValue.id && (typeof safeValue.id === 'string' || typeof safeValue.id === 'number')) return safeValue.id.toString();
+      
       // 객체의 모든 속성을 문자열로 변환 시도
-      const objStr = JSON.stringify(value);
+      const objStr = JSON.stringify(safeValue);
       if (objStr && objStr !== '{}' && objStr !== '[]') {
         return objStr.length > 50 ? objStr.substring(0, 50) + '...' : objStr;
       }
@@ -165,7 +177,7 @@ const PostDetail = () => {
         console.log('Post data values:', response.data);
         
         // 문제가 될 수 있는 속성들 확인
-        const problematicKeys = ['id', 'name', 'disp', 'display', 'type', 'value'];
+        const problematicKeys = ['id', 'name', 'disp', 'display', 'type', 'value', 'displayOrder'];
         problematicKeys.forEach(key => {
           if (key in response.data) {
             console.log(`Found potentially problematic key '${key}':`, response.data[key]);
@@ -190,13 +202,28 @@ const PostDetail = () => {
       const cleanPostData = { ...response.data };
       
       // React에서 문제가 될 수 있는 속성들 제거
-      const dangerousKeys = ['disp', 'display', 'type', 'value'];
+      const dangerousKeys = ['disp', 'display', 'type', 'value', 'displayOrder'];
       dangerousKeys.forEach(key => {
         if (key in cleanPostData) {
           console.log(`Removing potentially dangerous key '${key}':`, cleanPostData[key]);
           delete cleanPostData[key];
         }
       });
+      
+      // 카테고리 객체도 안전하게 처리
+      if (cleanPostData.category && typeof cleanPostData.category === 'object') {
+        const safeCategory = {
+          id: cleanPostData.category.id || 0,
+          name: cleanPostData.category.name || ''
+        };
+        // 카테고리에서도 위험한 키들 제거
+        dangerousKeys.forEach(key => {
+          if (key in safeCategory) {
+            delete safeCategory[key];
+          }
+        });
+        cleanPostData.category = safeCategory;
+      }
       
       // null/undefined 값들을 안전한 기본값으로 대체
       const safePostData = {
@@ -248,13 +275,39 @@ const PostDetail = () => {
           .map(comment => {
             // 문제가 될 수 있는 속성들 제거
             const cleanComment = { ...comment };
-            const dangerousKeys = ['disp', 'display', 'type', 'value'];
+            const dangerousKeys = ['disp', 'display', 'type', 'value', 'displayOrder'];
             dangerousKeys.forEach(key => {
               if (key in cleanComment) {
                 console.log(`Removing dangerous key '${key}' from comment:`, cleanComment[key]);
                 delete cleanComment[key];
               }
             });
+            
+            // 답글들도 안전하게 처리
+            let safeReplies = [];
+            if (Array.isArray(cleanComment.replies)) {
+              safeReplies = cleanComment.replies
+                .filter(reply => reply && typeof reply === 'object')
+                .map(reply => {
+                  const cleanReply = { ...reply };
+                  dangerousKeys.forEach(key => {
+                    if (key in cleanReply) {
+                      delete cleanReply[key];
+                    }
+                  });
+                  
+                  return {
+                    id: cleanReply.id || 0,
+                    content: cleanReply.content || '',
+                    author: cleanReply.author || '',
+                    authorId: cleanReply.authorId || 0,
+                    createdAt: cleanReply.createdAt || null,
+                    updatedAt: cleanReply.updatedAt || null,
+                    likeCount: cleanReply.likeCount || 0,
+                    dislikeCount: cleanReply.dislikeCount || 0
+                  };
+                });
+            }
             
             // 안전한 기본값으로 대체
             return {
@@ -266,7 +319,7 @@ const PostDetail = () => {
               updatedAt: cleanComment.updatedAt || null,
               likeCount: cleanComment.likeCount || 0,
               dislikeCount: cleanComment.dislikeCount || 0,
-              replies: Array.isArray(cleanComment.replies) ? cleanComment.replies : []
+              replies: safeReplies
             };
           });
         
@@ -290,7 +343,6 @@ const PostDetail = () => {
 
     try {
       const response = await api.post(`/posts/${id}/reaction`, { 
-        postId: parseInt(id),
         type: type 
       });
       setPost(prev => ({
@@ -298,7 +350,19 @@ const PostDetail = () => {
         likeCount: response.data.likeCount,
         dislikeCount: response.data.dislikeCount
       }));
-      toast.success(type === 'LIKE' ? '좋아요를 눌렀습니다!' : '싫어요를 눌렀습니다!');
+      
+      // 성공 메시지와 함께 5분 제한 안내
+      const message = type === 'LIKE' ? '좋아요를 눌렀습니다!' : '싫어요를 눌렀습니다!';
+      toast.success(`${message} (5분간 수정 불가)`);
+      
+      // 5분 후에 수정 가능하다는 안내 토스트
+      setTimeout(() => {
+        toast('이제 반응을 수정할 수 있습니다!', {
+          icon: '🔄',
+          duration: 3000,
+        });
+      }, 300000); // 5분 = 300초 = 300000ms
+      
     } catch (error) {
       console.error('반응 처리 실패:', error);
       if (error.response?.data?.message) {
@@ -407,9 +471,27 @@ const PostDetail = () => {
   const formatDate = (dateString) => {
     if (!dateString) return '';
     try {
-      const date = new Date(dateString);
+      // 날짜 문자열을 파싱 (브라우저 로컬 시간으로 자동 변환)
+      const localDate = new Date(dateString);
+      
+      // 유효한 날짜인지 확인
+      if (isNaN(localDate.getTime())) {
+        console.error('Invalid date:', dateString);
+        return '';
+      }
+      
+      // 현재 시간 (브라우저 로컬 시간)
       const now = new Date();
-      const diffInMs = now - date;
+      
+      // 시간 차이 계산 (밀리초) - 로컬 시간 기준으로 계산
+      const diffInMs = now.getTime() - localDate.getTime();
+      
+      // 음수인 경우 (미래 시간) 처리
+      if (diffInMs < 0) {
+        console.warn('Future date detected:', dateString, 'Local time:', localDate, 'Current local time:', now);
+        return '방금 전';
+      }
+      
       const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
       const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
       const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
@@ -418,9 +500,17 @@ const PostDetail = () => {
       if (diffInMinutes < 60) return `${diffInMinutes}분 전`;
       if (diffInHours < 24) return `${diffInHours}시간 전`;
       if (diffInDays < 7) return `${diffInDays}일 전`;
-      return date.toLocaleDateString('ko-KR');
+      
+      // 7일 이상 지난 경우 날짜 형식으로 표시 (브라우저 로컬 시간 기준)
+      return localDate.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     } catch (error) {
-      console.error('Date formatting error:', error);
+      console.error('Date formatting error:', error, 'dateString:', dateString);
       return '';
     }
   };
@@ -677,20 +767,24 @@ const PostDetail = () => {
                         
                         {user && (safeRender(post?.author) === user.username || post?.authorId === user.id || user.role === 'ADMIN') && (
                           <div className="flex items-center space-x-2">
-                            <Link
-                              to={`/posts/${id}/edit`}
-                              className="p-2 text-gray-400 hover:text-blue-400 transition-colors duration-200"
-                              title="수정"
-                            >
-                              <Edit className="w-5 h-5" />
-                            </Link>
-                            <button
-                              onClick={handleDeletePost}
-                              className="p-2 text-gray-400 hover:text-red-400 transition-colors duration-200"
-                              title="삭제"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
+                            {user && user.role === 'ADMIN' && (
+                              <div className="flex items-center space-x-2">
+                                <Link
+                                  to={`/posts/${id}/edit`}
+                                  className="p-2 text-gray-400 hover:text-blue-400 transition-colors duration-200"
+                                  title="수정"
+                                >
+                                  <Edit className="w-5 h-5" />
+                                </Link>
+                                <button
+                                  onClick={handleDeletePost}
+                                  className="p-2 text-gray-400 hover:text-red-400 transition-colors duration-200"
+                                  title="삭제"
+                                >
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

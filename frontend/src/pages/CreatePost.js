@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, X, FileText, Code, Database, Zap, Cloud, BookOpen, Upload, File, X as XIcon, Plus } from 'lucide-react';
+import { ArrowLeft, Save, X, FileText, Code, Database, Zap, Cloud, BookOpen, Upload, File, X as XIcon, Plus, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
@@ -8,6 +8,7 @@ import api from '../services/api';
 const CreatePost = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isAdmin = user && user.role === 'ADMIN';
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -166,17 +167,18 @@ const CreatePost = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  if (!user) {
+  if (!isAdmin) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
-        <div className="glass-dark p-8 rounded-2xl text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">로그인이 필요합니다</h2>
-          <p className="text-gray-300 mb-6">게시글을 작성하려면 로그인해주세요.</p>
+        <div className="glass-dark p-8 rounded-2xl text-center max-w-md">
+          <Shield className="w-10 h-10 text-red-400 mx-auto mb-3" />
+          <h2 className="text-2xl font-bold text-white mb-2">접근 권한이 없습니다</h2>
+          <p className="text-gray-300 mb-6">게시글 작성은 관리자만 가능합니다.</p>
           <button 
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/')}
             className="btn-primary"
           >
-            로그인하기
+            홈으로 이동
           </button>
         </div>
       </div>

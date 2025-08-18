@@ -46,6 +46,37 @@ public class CategoryController {
         return ResponseEntity.ok(categories);
     }
 
+    @Operation(summary = "계층 구조 카테고리 조회", description = "대분류와 소분류로 구성된 계층 구조 카테고리를 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공")
+    })
+    @GetMapping("/hierarchy")
+    public ResponseEntity<List<CategoryResponseDto>> getHierarchicalCategories() {
+        List<CategoryResponseDto> categories = categoryService.getHierarchicalCategories();
+        return ResponseEntity.ok(categories);
+    }
+
+    @Operation(summary = "대분류 카테고리 조회", description = "모든 대분류 카테고리를 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공")
+    })
+    @GetMapping("/main")
+    public ResponseEntity<List<CategoryResponseDto>> getMainCategories() {
+        List<CategoryResponseDto> categories = categoryService.getMainCategories();
+        return ResponseEntity.ok(categories);
+    }
+
+    @Operation(summary = "소분류 카테고리 조회", description = "특정 대분류의 소분류 카테고리들을 조회합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "조회 성공"),
+        @ApiResponse(responseCode = "404", description = "대분류 카테고리를 찾을 수 없음")
+    })
+    @GetMapping("/main/{mainCategoryId}/sub")
+    public ResponseEntity<List<CategoryResponseDto>> getSubCategories(@PathVariable Long mainCategoryId) {
+        List<CategoryResponseDto> categories = categoryService.getSubCategories(mainCategoryId);
+        return ResponseEntity.ok(categories);
+    }
+
     @Operation(summary = "카테고리 상세 조회", description = "특정 카테고리의 상세 정보를 조회합니다.")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "조회 성공"),

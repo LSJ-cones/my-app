@@ -20,7 +20,7 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String name;
 
     @Column(length = 500)
@@ -32,6 +32,18 @@ public class Category {
     @Column(name = "is_active")
     private boolean active = true;
 
+    // 계층 구조 지원
+    @Column(name = "category_type")
+    @Enumerated(EnumType.STRING)
+    private CategoryType categoryType = CategoryType.SUB; // 기본값은 소분류
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Category parent; // 상위 카테고리 (대분류)
+
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Category> children = new ArrayList<>(); // 하위 카테고리들 (소분류들)
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -42,6 +54,12 @@ public class Category {
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Post> posts = new ArrayList<>();
 
+    // 카테고리 타입 enum
+    public enum CategoryType {
+        MAIN,   // 대분류
+        SUB     // 소분류
+    }
+
     @PrePersist
     public void prePersist() {
         this.createdAt = this.updatedAt = LocalDateTime.now();
@@ -50,5 +68,23 @@ public class Category {
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    // 대분류인지 확인
+    public boolean isMainCategory() {
+        return this.categoryType == CategoryType.MAIN;
+    }
+
+    // 소분류인지 확인
+    public boolean isSubCategory() {
+        return this.categoryType == CategoryType.SUB;
+    }
+
+    // 전체 경로 이름 반환 (예: "개발 > Java > Spring Boot")
+    public String getFullPath() {
+        if (this.parent != null) {
+            return this.parent.getFullPath() + " > " + this.name;
+        }
+        return this.name;
     }
 }

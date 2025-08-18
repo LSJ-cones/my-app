@@ -32,7 +32,15 @@ public class CategoryService {
                 .description(requestDto.getDescription())
                 .displayOrder(requestDto.getDisplayOrder())
                 .active(requestDto.isActive())
+                .categoryType(requestDto.getCategoryType())
                 .build();
+
+        // 부모 카테고리가 지정된 경우
+        if (requestDto.getParentId() != null) {
+            Category parent = categoryRepository.findById(requestDto.getParentId())
+                    .orElseThrow(() -> new RuntimeException("부모 카테고리를 찾을 수 없습니다: " + requestDto.getParentId()));
+            category.setParent(parent);
+        }
 
         Category savedCategory = categoryRepository.save(category);
         return convertToResponseDto(savedCategory);
@@ -41,6 +49,33 @@ public class CategoryService {
     @Transactional(readOnly = true)
     public List<CategoryResponseDto> getAllCategories() {
         return categoryRepository.findAllActiveOrdered()
+                .stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CategoryResponseDto> getHierarchicalCategories() {
+        return categoryRepository.findAllActiveOrdered()
+                .stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CategoryResponseDto> getMainCategories() {
+        return categoryRepository.findByCategoryTypeAndActiveTrueOrderByDisplayOrder(Category.CategoryType.MAIN)
+                .stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CategoryResponseDto> getSubCategories(Long mainCategoryId) {
+        Category mainCategory = categoryRepository.findById(mainCategoryId)
+                .orElseThrow(() -> new RuntimeException("대분류 카테고리를 찾을 수 없습니다: " + mainCategoryId));
+        
+        return categoryRepository.findByParentAndActiveTrueOrderByDisplayOrder(mainCategory)
                 .stream()
                 .map(this::convertToResponseDto)
                 .collect(Collectors.toList());
@@ -67,6 +102,16 @@ public class CategoryService {
         category.setDescription(requestDto.getDescription());
         category.setDisplayOrder(requestDto.getDisplayOrder());
         category.setActive(requestDto.isActive());
+        category.setCategoryType(requestDto.getCategoryType());
+
+        // 부모 카테고리 업데이트
+        if (requestDto.getParentId() != null) {
+            Category parent = categoryRepository.findById(requestDto.getParentId())
+                    .orElseThrow(() -> new RuntimeException("부모 카테고리를 찾을 수 없습니다: " + requestDto.getParentId()));
+            category.setParent(parent);
+        } else {
+            category.setParent(null);
+        }
 
         Category updatedCategory = categoryRepository.save(category);
         return convertToResponseDto(updatedCategory);
@@ -82,6 +127,11 @@ public class CategoryService {
             throw new RuntimeException("게시글이 있는 카테고리는 삭제할 수 없습니다. 게시글 수: " + postCount);
         }
 
+        // 하위 카테고리가 있는지 확인 (대분류인 경우)
+        if (category.isMainCategory() && !category.getChildren().isEmpty()) {
+            throw new RuntimeException("하위 카테고리가 있는 대분류는 삭제할 수 없습니다.");
+        }
+
         categoryRepository.delete(category);
     }
 
@@ -94,6 +144,10 @@ public class CategoryService {
                 .description(category.getDescription())
                 .displayOrder(category.getDisplayOrder())
                 .active(category.isActive())
+                .categoryType(category.getCategoryType())
+                .parentId(category.getParent() != null ? category.getParent().getId() : null)
+                .parentName(category.getParent() != null ? category.getParent().getName() : null)
+                .fullPath(category.getFullPath())
                 .createdAt(category.getCreatedAt())
                 .updatedAt(category.getUpdatedAt())
                 .postCount(postCount)

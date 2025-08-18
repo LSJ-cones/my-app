@@ -1,5 +1,6 @@
 package com.blog.toy.dto.category;
 
+import com.blog.toy.domain.Category;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -21,4 +22,8 @@ public class CategoryRequestDto {
     private Integer displayOrder;
     
     private boolean active = true;
+    
+    private Category.CategoryType categoryType = Category.CategoryType.SUB;
+    
+    private Long parentId;
 }

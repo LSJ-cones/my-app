@@ -9,7 +9,8 @@ import {
   X,
   LogIn,
   LogOut,
-  BookOpen
+  BookOpen,
+  Settings
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -27,11 +28,14 @@ const Header = () => {
     setIsMobileMenuOpen(false);
   };
 
+  const isAdmin = user && user.role === 'ADMIN';
+
   const navItems = isAuthenticated ? [
     { path: '/', icon: Home, label: '홈' },
-    { path: '/posts/create', icon: Plus, label: '글쓰기' },
+    ...(isAdmin ? [{ path: '/posts/create', icon: Plus, label: '글쓰기' }] : []),
     { path: '/notifications', icon: Bell, label: '알림' },
     { path: '/profile', icon: User, label: '프로필' },
+    ...(isAdmin ? [{ path: '/admin/categories', icon: Settings, label: '카테고리 관리' }] : []),
   ] : [
     { path: '/', icon: Home, label: '홈' },
     { path: '/login', icon: LogIn, label: '로그인' },

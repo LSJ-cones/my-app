@@ -18,72 +18,7 @@ export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [activePopups, setActivePopups] = useState([]);
-  const wsRef = useRef(null);
   const popupIdRef = useRef(0);
-
-  // WebSocket 연결
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
-
-    // WebSocket 연결
-    const connectWebSocket = () => {
-      try {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws/notifications`;
-        
-        wsRef.current = new WebSocket(wsUrl);
-
-        wsRef.current.onopen = () => {
-          console.log('WebSocket 연결됨');
-        };
-
-        wsRef.current.onmessage = (event) => {
-          try {
-            const notification = JSON.parse(event.data);
-            console.log('실시간 알림 수신:', notification);
-            
-            // 새 알림 추가
-            setNotifications(prev => [notification, ...prev]);
-            setUnreadCount(prev => prev + 1);
-            
-            // 팝업 표시
-            showNotificationPopup(notification);
-            
-            // 토스트 메시지 표시
-            toast.success(notification.content, {
-              duration: 3000,
-              position: 'top-right',
-            });
-          } catch (error) {
-            console.error('알림 파싱 오류:', error);
-          }
-        };
-
-        wsRef.current.onclose = () => {
-          console.log('WebSocket 연결 종료');
-          // 3초 후 재연결 시도
-          setTimeout(connectWebSocket, 3000);
-        };
-
-        wsRef.current.onerror = (error) => {
-          console.error('WebSocket 오류:', error);
-        };
-      } catch (error) {
-        console.error('WebSocket 연결 실패:', error);
-      }
-    };
-
-    connectWebSocket();
-
-    // 컴포넌트 언마운트 시 연결 종료
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-    };
-  }, [user]);
 
   // 알림 팝업 표시
   const showNotificationPopup = (notification) => {

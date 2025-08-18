@@ -11,6 +11,7 @@ import EditPost from './pages/EditPost';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
+import CategoryManagement from './pages/CategoryManagement';
 import './index.css';
 
 // 페이지 전환 애니메이션을 위한 래퍼 컴포넌트
@@ -26,6 +27,7 @@ const AnimatedRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/notifications" element={<Notifications />} />
+      <Route path="/admin/categories" element={<CategoryManagement />} />
       <Route path="*" element={<Home />} />
     </Routes>
   );

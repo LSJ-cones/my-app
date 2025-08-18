@@ -10,6 +10,12 @@ RUN npm run build
 ### 2단계: Nginx에 정적 파일 복사
 FROM nginx:alpine
 
+# 시간대 설정 (한국 시간)
+ENV TZ=Asia/Seoul
+RUN apk add --no-cache tzdata && \
+    cp /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone
+
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/build /usr/share/nginx/html
 
