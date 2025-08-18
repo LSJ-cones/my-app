@@ -6,27 +6,16 @@ services:
     container_name: my-app-backend
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/blogdb
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://database-2.cxw0w0g0cyap.ap-northeast-1.rds.amazonaws.com:5432/my_app
       - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_DATASOURCE_PASSWORD=diRlqkq99*
     ports:
       - "8081:8081"
-    depends_on:
-      - db
+    restart: unless-stopped
     networks:
       - webnet
-
-  db:
-    image: postgres:15
-    container_name: my-app-db
-    environment:
-      - POSTGRES_DB=blogdb
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - webnet
+      - ./uploads:/app/uploads
 
   web:
     build:
@@ -37,11 +26,9 @@ services:
       - "80:80"
     depends_on:
       - backend
+    restart: unless-stopped
     networks:
       - webnet
-
-volumes:
-  postgres_data:
 
 networks:
   webnet:
