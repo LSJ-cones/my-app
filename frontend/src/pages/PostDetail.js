@@ -821,9 +821,12 @@ const PostDetail = () => {
                       </div>
                       
                       <div className="prose prose-invert max-w-none mb-8">
-                        <div className="text-gray-300 leading-relaxed whitespace-pre-wrap">
-                          <SafeText value={post?.content} fallback="내용이 없습니다." />
-                        </div>
+                        <div 
+                          className="text-gray-300 leading-relaxed"
+                          dangerouslySetInnerHTML={{ 
+                            __html: post?.content || "내용이 없습니다." 
+                          }}
+                        />
                       </div>
 
                       {/* 첨부 파일 */}

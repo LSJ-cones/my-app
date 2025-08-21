@@ -18,9 +18,9 @@ export const AuthProvider = ({ children }) => {
   // 로그인 상태 확인
   const checkAuthStatus = async () => {
     try {
-      // localStorage에서 사용자 정보와 토큰을 가져옴
-      const savedUser = localStorage.getItem('user');
-      const savedToken = localStorage.getItem('token');
+      // sessionStorage에서 사용자 정보와 토큰을 가져옴 (브라우저 종료시 자동 삭제)
+      const savedUser = sessionStorage.getItem('user');
+      const savedToken = sessionStorage.getItem('token');
       
       if (savedUser && savedToken) {
         const parsedUser = JSON.parse(savedUser);
@@ -30,8 +30,8 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('인증 상태 확인 실패:', error);
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      sessionStorage.removeItem('token');
     } finally {
       setLoading(false);
     }
@@ -53,8 +53,8 @@ export const AuthProvider = ({ children }) => {
       };
       
       setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-      localStorage.setItem('token', token);
+      sessionStorage.setItem('user', JSON.stringify(userData));
+      sessionStorage.setItem('token', token);
       return { success: true };
     } catch (error) {
       console.error('로그인 실패:', error);
@@ -65,8 +65,8 @@ export const AuthProvider = ({ children }) => {
   // 로그아웃
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('token');
   };
 
   useEffect(() => {
