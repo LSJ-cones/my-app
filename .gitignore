@@ -1,1 +1,87 @@
+# 백엔드 관련
 src/main/resources/application.yml
+backend/build/
+backend/.gradle/
+backend/bin/
+backend/out/
+backend/*.log
+
+# 프론트엔드 관련
+frontend/node_modules/
+frontend/build/
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# 로컬 개발용 파일들
+docker-compose.local.yml
+nginx/nginx-local.conf
+test*.txt
+test*.ps1
+test*.bat
+test-files/
+search-test.html
+
+# 민감한 정보
+*.ppk
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+id_rsa*
+*.pub
+.env
+.env.*
+
+# IDE 관련
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS 관련
+.DS_Store
+Thumbs.db
+
+# 로그 파일들
+*.log
+logs/
+
+# 임시 파일들
+*.tmp
+*.temp
+temp/
+tmp/
+
+# 데이터베이스
+*.db
+*.sqlite
+*.sqlite3
+
+# 백업 파일들
+*.bak
+*.backup
+*~
+
+# 압축 파일들
+*.zip
+*.tar.gz
+*.rar
+
+# 인증서 관련
+certbot/conf/
+certbot/www/
+*.pem
+*.key
+*.crt
+
+# 로컬 설정 파일들
+application-local.properties
+application-dev.properties
