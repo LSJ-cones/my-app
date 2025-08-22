@@ -46,8 +46,8 @@ const Header = () => {
           {/* 로고 */}
           <Link to="/" className="flex items-center space-x-3 group">
             <div className="relative">
-              <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-700 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-red-500/25 transition-all duration-300">
-                <img src="/katana-logo.svg" alt="Katana Logo" className="w-6 h-6" />
+              <div className="w-16 h-16 bg-gray-800 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-gray-700/25 transition-all duration-300">
+                <img src="/katana-logo.svg" alt="Katana Logo" className="w-12 h-12" />
               </div>
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-400 rounded-full animate-pulse"></div>
             </div>

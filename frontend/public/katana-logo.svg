@@ -1,16 +1,61 @@
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- 카타나 검신 -->
-  <path d="M8 16 L24 16 L22 18 L10 18 Z" fill="#dc2626" stroke="#ffffff" stroke-width="1"/>
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 배경 원 -->
+  <circle cx="32" cy="32" r="32" fill="#374151"/>
   
-  <!-- 카타나 손잡이 -->
-  <rect x="6" y="14" width="4" height="4" fill="#8b4513" stroke="#ffffff" stroke-width="1"/>
-  
-  <!-- 도트 효과 -->
-  <circle cx="12" cy="17" r="1" fill="#ffffff"/>
-  <circle cx="16" cy="17" r="1" fill="#ffffff"/>
-  <circle cx="20" cy="17" r="1" fill="#ffffff"/>
+  <!-- 카타나 검신 (자연스러운 곡선) -->
+  <path d="M12 28 L44 28 L42 32 L14 32 Z" fill="url(#bladeGradient)" stroke="#6b7280" stroke-width="0.5"/>
   
   <!-- 검날 반짝임 효과 -->
-  <path d="M9 16.5 L23 16.5" stroke="#ffffff" stroke-width="0.5" opacity="0.8"/>
-  <path d="M10 17.5 L22 17.5" stroke="#ffffff" stroke-width="0.5" opacity="0.6"/>
+  <path d="M13 29 L43 29" stroke="#ffffff" stroke-width="1" opacity="0.9"/>
+  <path d="M14 31 L42 31" stroke="#ffffff" stroke-width="0.5" opacity="0.7"/>
+  
+  <!-- 코등이 (자연스러운 원형) -->
+  <ellipse cx="14" cy="30" rx="3" ry="4" fill="url(#tsubaGradient)" stroke="#6b7280" stroke-width="0.5"/>
+  <ellipse cx="14" cy="30" rx="2" ry="3" fill="#FFD700" opacity="0.8"/>
+  
+  <!-- 손잡이 (자연스러운 형태) -->
+  <path d="M8 28 L14 28 L14 32 L8 32 Z" fill="url(#handleGradient)" stroke="#6b7280" stroke-width="0.5"/>
+  
+  <!-- 손잡이 감긴 끈 -->
+  <path d="M9 29 L13 29" stroke="#FFD700" stroke-width="1" stroke-linecap="round"/>
+  <path d="M9 31 L13 31" stroke="#FFD700" stroke-width="1" stroke-linecap="round"/>
+  
+  <!-- 칼집 (자연스러운 곡선) -->
+  <path d="M18 34 L50 34 L48 40 L20 40 Z" fill="url(#scabbardGradient)" stroke="#6b7280" stroke-width="0.5"/>
+  
+  <!-- 칼집 장식 -->
+  <path d="M22 36 L26 36" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+  <path d="M30 36 L34 36" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+  <path d="M38 36 L42 36" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+  <path d="M46 36 L50 36" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- 그라데이션 정의 -->
+  <defs>
+    <!-- 검신 그라데이션 -->
+    <linearGradient id="bladeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#e5e7eb;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#f3f4f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d1d5db;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- 코등이 그라데이션 -->
+    <radialGradient id="tsubaGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" />
+    </radialGradient>
+    
+    <!-- 손잡이 그라데이션 -->
+    <linearGradient id="handleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#8B4513;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#A0522D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#654321;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- 칼집 그라데이션 -->
+    <linearGradient id="scabbardGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#800080;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#9370DB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#663399;stop-opacity:1" />
+    </linearGradient>
+  </defs>
 </svg>
