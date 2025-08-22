@@ -47,13 +47,13 @@ const Header = () => {
           <Link to="/" className="flex items-center space-x-3 group">
             <div className="relative">
               <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-700 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-red-500/25 transition-all duration-300">
-                <BookOpen className="w-6 h-6 text-white" />
+                <img src="/katana-logo.svg" alt="Katana Logo" className="w-6 h-6" />
               </div>
               <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-400 rounded-full animate-pulse"></div>
             </div>
             <div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-red-400 to-red-600 bg-clip-text text-transparent">
-                Lcones Blog
+                leecone Blog
               </h1>
               <p className="text-xs text-gray-400">기술 블로그</p>
             </div>

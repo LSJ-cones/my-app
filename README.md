@@ -1,4 +1,4 @@
-# 🗡️ Lcones Blog - 귀멸의 칼날 스타일 기술 블로그
+# 🗡️ leecone Blog - 귀멸의 칼날 스타일 기술 블로그
 
 > Spring Boot + React + Docker로 구현된 기술 블로그 플랫폼
 
@@ -172,7 +172,7 @@ docker stats
 
 ## 👨‍💻 개발자
 
-**Lcones** - [GitHub](https://github.com/LSJ-cones)
+**leecone** - [GitHub](https://github.com/LSJ-cones)
 
 ---
 
