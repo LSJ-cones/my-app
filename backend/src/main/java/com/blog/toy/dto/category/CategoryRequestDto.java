@@ -23,7 +23,5 @@ public class CategoryRequestDto {
     
     private boolean active = true;
     
-    private Category.CategoryType categoryType = Category.CategoryType.SUB;
-    
-    private Long parentId;
+    private Long parentId; // 부모 카테고리 ID (null이면 대분류, 있으면 소분류)
 }

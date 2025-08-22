@@ -15,7 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import ReactQuill from 'react-quill';
-import './quill-styles.css';
+import '../quill-styles.css';
 
 const EditPost = () => {
   const { id } = useParams();

@@ -235,6 +235,22 @@ public class PostService {
         return new PageResponseDto<>(postResponseDtoPage);
     }
 
+    // 다중 카테고리 ID로 게시글 조회
+    public PageResponseDto<PostResponseDto> findByCategoryIds(List<Long> categoryIds, PageRequestDto pageRequestDto) {
+        List<Category> categories = new ArrayList<>();
+        
+        for (Long categoryId : categoryIds) {
+            Category category = categoryRepository.findById(categoryId)
+                    .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다: " + categoryId));
+            categories.add(category);
+        }
+        
+        Page<Post> postPage = postRepository.findByCategoryIn(categories, pageRequestDto.toPageable());
+        Page<PostResponseDto> postResponseDtoPage = postPage.map(this::convertToResponseDto);
+        
+        return new PageResponseDto<>(postResponseDtoPage);
+    }
+
     // 태그별 게시글 조회
     public PageResponseDto<PostResponseDto> findByTags(List<String> tagNames, PageRequestDto pageRequestDto) {
         List<Tag> tags = tagRepository.findByNamesIn(tagNames);
@@ -508,10 +524,18 @@ public class PostService {
     private PostResponseDto convertToResponseDto(Post post) {
         CategoryResponseDto categoryDto = null;
         if (post.getCategory() != null) {
+            Category category = post.getCategory();
             categoryDto = CategoryResponseDto.builder()
-                    .id(post.getCategory().getId())
-                    .name(post.getCategory().getName())
-                    .description(post.getCategory().getDescription())
+                    .id(category.getId())
+                    .name(category.getName())
+                    .description(category.getDescription())
+                    .displayOrder(category.getDisplayOrder())
+                    .active(category.isActive())
+                    .parentId(category.getParent() != null ? category.getParent().getId() : null)
+                    .parentName(category.getParent() != null ? category.getParent().getName() : null)
+                    .fullPath(category.getFullPath())
+                    .createdAt(category.getCreatedAt())
+                    .updatedAt(category.getUpdatedAt())
                     .build();
         }
 

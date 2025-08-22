@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, X, FileText, Code, Database, Zap, Cloud, BookOpen, Upload, File, X as XIcon, Plus, Shield } from 'lucide-react';
+import { ArrowLeft, Save, X, BookOpen, Upload, ChevronDown, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
-import ReactQuill from 'react-quill';
-import './quill-styles.css';
 
 const CreatePost = () => {
   const navigate = useNavigate();
@@ -17,47 +15,21 @@ const CreatePost = () => {
     categoryId: ''
   });
   const [submitting, setSubmitting] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [uploadingFiles, setUploadingFiles] = useState(false);
   const [categories, setCategories] = useState([]);
   const [mainCategories, setMainCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
   const [selectedMainCategory, setSelectedMainCategory] = useState(null);
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [newCategory, setNewCategory] = useState({ name: '', description: '' });
-
-  // Quill 에디터 설정
-  const quillModules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      [{ 'color': [] }, { 'background': [] }],
-      [{ 'align': [] }],
-      ['link', 'image', 'code-block'],
-      ['clean']
-    ],
-  };
-
-  const quillFormats = [
-    'header',
-    'bold', 'italic', 'underline', 'strike',
-    'list', 'bullet',
-    'color', 'background',
-    'align',
-    'link', 'image', 'code-block'
-  ];
 
   // 카테고리 목록 가져오기
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await api.get('/categories');
+        const response = await api.get('/categories/hierarchy');
         setCategories(response.data);
         
-        // 대분류와 소분류 분리
-        const mainCats = response.data.filter(cat => cat.categoryType === 'MAIN');
-        const subCats = response.data.filter(cat => cat.categoryType === 'SUB');
+        // 대분류와 소분류 분리 (parentId 기반)
+        const mainCats = response.data.filter(cat => !cat.parentId);
+        const subCats = response.data.filter(cat => cat.parentId);
         
         setMainCategories(mainCats);
         setSubCategories(subCats);
@@ -87,34 +59,13 @@ const CreatePost = () => {
     }));
   };
 
-  // 카테고리 생성
-  const handleCreateCategory = async () => {
-    if (!newCategory.name.trim()) {
-      toast.error('카테고리명을 입력해주세요.');
-      return;
-    }
 
-    try {
-      const response = await api.post('/categories', {
-        name: newCategory.name,
-        description: newCategory.description
-      });
-      
-      toast.success('카테고리가 생성되었습니다.');
-      setCategories(prev => [...prev, response.data]);
-      setNewCategory({ name: '', description: '' });
-      setShowCategoryModal(false);
-    } catch (error) {
-      console.error('카테고리 생성 실패:', error);
-      toast.error('카테고리 생성에 실패했습니다.');
-    }
-  };
 
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
-    setUploadingFiles(true);
+          // setUploadingFiles(true);
     const newFiles = [];
 
     try {
@@ -143,19 +94,15 @@ const CreatePost = () => {
 
         toast.success(`${file.name} 파일이 업로드되었습니다.`);
       }
-
-      setUploadedFiles(prev => [...prev, ...newFiles]);
     } catch (error) {
       console.error('파일 업로드 실패:', error);
       toast.error('파일 업로드에 실패했습니다.');
     } finally {
-      setUploadingFiles(false);
+      // setUploadingFiles(false);
     }
   };
 
-  const removeFile = (fileId) => {
-    setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
-  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -174,8 +121,7 @@ const CreatePost = () => {
     try {
       const postData = {
         ...formData,
-        author: user?.username || '익명',
-        fileIds: uploadedFiles.map(file => file.id)
+        author: user?.username || '익명'
       };
 
       const response = await api.post('/posts', postData);
@@ -263,74 +209,84 @@ const CreatePost = () => {
 
             {/* 카테고리 선택 */}
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <label className="block text-white font-medium">카테고리</label>
-                {user?.role === 'ADMIN' && (
-                  <button
-                    type="button"
-                    onClick={() => setShowCategoryModal(true)}
-                    className="flex items-center space-x-1 text-red-400 hover:text-red-300 transition-colors duration-200"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span className="text-sm">카테고리 추가</span>
-                  </button>
-                )}
-              </div>
+              <label className="block text-white font-medium mb-3">카테고리</label>
               
-              {/* 대분류 선택 */}
+              {/* 카테고리 선택 */}
               <div className="mb-4">
-                <label className="block text-gray-300 text-sm mb-2">대분류</label>
+                <label className="block text-gray-300 text-sm mb-2">카테고리</label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {mainCategories.map((category) => (
-                    <button
-                      key={category.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedMainCategory(category);
-                        // 해당 대분류의 첫 번째 소분류를 자동 선택
-                        const firstSubCat = subCategories.find(cat => cat.parentId === category.id);
-                        if (firstSubCat) {
-                          setFormData(prev => ({ ...prev, categoryId: firstSubCat.id }));
-                        }
-                      }}
-                      className={`flex items-center space-x-2 p-3 rounded-xl border transition-all duration-200 ${
-                        selectedMainCategory?.id === category.id
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
-                          : 'bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700 hover:border-blue-500'
-                      }`}
-                    >
-                      <BookOpen className="w-4 h-4" />
-                      <span className="font-medium">{category.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 소분류 선택 */}
-              {selectedMainCategory && (
-                <div>
-                  <label className="block text-gray-300 text-sm mb-2">소분류</label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {subCategories
-                      .filter(cat => cat.parentId === selectedMainCategory.id)
-                      .map((category) => (
+                  {mainCategories.map((category) => {
+                    const subCats = subCategories.filter(cat => cat.parentId === category.id);
+                    const isSelected = selectedMainCategory?.id === category.id;
+                    const selectedSubCat = subCats.find(cat => cat.id === formData.categoryId);
+                    
+                    return (
+                      <div key={category.id} className="relative">
                         <button
-                          key={category.id}
                           type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, categoryId: category.id }))}
-                          className={`flex items-center space-x-2 p-3 rounded-xl border transition-all duration-200 ${
-                            formData.categoryId === category.id
-                              ? 'bg-red-600 text-white border-red-600 shadow-lg'
-                              : 'bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700 hover:border-red-500'
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedMainCategory(null);
+                              setFormData(prev => ({ ...prev, categoryId: '' }));
+                            } else {
+                              setSelectedMainCategory(category);
+                              // 해당 대분류의 첫 번째 소분류를 자동 선택
+                              const firstSubCat = subCats[0];
+                              if (firstSubCat) {
+                                setFormData(prev => ({ ...prev, categoryId: firstSubCat.id }));
+                              }
+                            }
+                          }}
+                          className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all duration-200 ${
+                            isSelected
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
+                              : 'bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700 hover:border-blue-500'
                           }`}
                         >
-                          <BookOpen className="w-4 h-4" />
-                          <span className="font-medium">{category.name}</span>
+                          <div className="flex items-center space-x-2">
+                            <BookOpen className="w-4 h-4" />
+                            <span className="font-medium">{category.name}</span>
+                          </div>
+                          {isSelected && subCats.length > 0 && (
+                            <ChevronDown className="w-4 h-4" />
+                          )}
                         </button>
-                      ))}
-                  </div>
+                        
+                        {/* 소분류 드롭다운 */}
+                        {isSelected && subCats.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-10">
+                            {subCats.map((subCat) => (
+                              <button
+                                key={subCat.id}
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({ ...prev, categoryId: subCat.id }));
+                                  // 소분류 선택 후 드롭다운 닫기
+                                  setSelectedMainCategory(null);
+                                }}
+                                className={`w-full text-left px-3 py-2 hover:bg-gray-700 transition-colors ${
+                                  formData.categoryId === subCat.id
+                                    ? 'bg-red-600 text-white'
+                                    : 'text-gray-300'
+                                }`}
+                              >
+                                {subCat.name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* 선택된 소분류 표시 */}
+                        {selectedSubCat && (
+                          <div className="mt-2 px-2 py-1 bg-red-600/20 border border-red-600/30 rounded text-sm text-red-400">
+                            선택: {selectedSubCat.name}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
             </div>
 
             {/* 파일 업로드 - 비활성화 */}
@@ -353,17 +309,13 @@ const CreatePost = () => {
             {/* 내용 */}
             <div>
               <label className="block text-white font-medium mb-2">내용</label>
-              <div className="quill-editor-container">
-                <ReactQuill
-                  theme="snow"
-                  value={formData.content}
-                  onChange={(content) => setFormData(prev => ({ ...prev, content }))}
-                  modules={quillModules}
-                  formats={quillFormats}
-                  placeholder="게시글 내용을 입력하세요"
-                  style={{ height: '300px' }}
-                />
-              </div>
+              <textarea
+                value={formData.content}
+                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                className="input-field w-full h-full p-4 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="게시글 내용을 입력하세요"
+                style={{ height: '300px' }}
+              />
               <div className="text-right text-gray-400 text-sm mt-1">
                 {formData.content.replace(/<[^>]*>/g, '').length}/5000
               </div>
@@ -402,52 +354,7 @@ const CreatePost = () => {
         </div>
       </div>
 
-      {/* 카테고리 생성 모달 */}
-      {showCategoryModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">새 카테고리 생성</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-white font-medium mb-2">카테고리명</label>
-                <input
-                  type="text"
-                  value={newCategory.name}
-                  onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="카테고리명을 입력하세요"
-                  className="input-field w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-white font-medium mb-2">설명 (선택사항)</label>
-                <textarea
-                  value={newCategory.description}
-                  onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="카테고리 설명을 입력하세요"
-                  className="input-field w-full h-20 resize-none"
-                />
-              </div>
-            </div>
-            <div className="flex space-x-3 mt-6">
-              <button
-                onClick={handleCreateCategory}
-                className="flex-1 btn-primary"
-              >
-                생성
-              </button>
-              <button
-                onClick={() => {
-                  setShowCategoryModal(false);
-                  setNewCategory({ name: '', description: '' });
-                }}
-                className="flex-1 btn-secondary"
-              >
-                취소
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };

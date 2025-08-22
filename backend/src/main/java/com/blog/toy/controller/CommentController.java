@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/comments")
@@ -123,13 +124,36 @@ public class CommentController {
         @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
         @ApiResponse(responseCode = "401", description = "인증 필요")
     })
-    @PostMapping("/{commentId}/reaction")
+        @PostMapping("/{commentId}/reaction")
     public ResponseEntity<CommentResponseDto> reactToComment(
-            @Parameter(description = "댓글 ID", example = "1") 
+            @Parameter(description = "댓글 ID", example = "1")
             @PathVariable Long commentId,
-            @Parameter(description = "반응 요청") 
-            @Valid @RequestBody CommentReactionDto reactionDto) {
+            @Parameter(description = "반응 요청")
+            @RequestBody Map<String, Object> requestBody) {
+        
+        System.out.println("🔍 댓글 반응 요청 - commentId: " + commentId);
+        System.out.println("🔍 댓글 반응 요청 - requestBody: " + requestBody);
+        
+        // JSON에서 type 값을 직접 추출
+        // requestBody에서 type 추출 (type과 reactionType 둘 다 지원)
+        Object typeObj = requestBody.get("type");
+        if (typeObj == null) {
+            typeObj = requestBody.get("reactionType"); // fallback
+        }
+        System.out.println("🔍 댓글 반응 요청 - type 객체: " + typeObj);
+        System.out.println("🔍 댓글 반응 요청 - type 클래스: " + (typeObj != null ? typeObj.getClass() : "null"));
+        
+        String typeString = typeObj != null ? typeObj.toString() : null;
+        System.out.println("🔍 댓글 반응 요청 - type 문자열: " + typeString);
+        
+        // CommentReactionDto 수동 생성
+        CommentReactionDto reactionDto = new CommentReactionDto();
         reactionDto.setCommentId(commentId);
+        reactionDto.setType(typeString);
+        
+        System.out.println("🔍 댓글 반응 요청 - 생성된 reactionDto: " + reactionDto);
+        System.out.println("🔍 댓글 반응 요청 - reactionDto.getType(): " + reactionDto.getType());
+
         CommentResponseDto response = commentService.reactToComment(reactionDto);
         return ResponseEntity.ok(response);
     }

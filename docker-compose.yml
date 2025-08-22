@@ -14,24 +14,21 @@ services:
       dockerfile: Dockerfile.frontend  # node + nginx 멀티스테이지 Dockerfile
     ports:
       - "80:80"
-      - "443:443"
     depends_on:
       - backend
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+      - ./nginx/nginx-local.conf:/etc/nginx/conf.d/default.conf
     networks:
       - webnet
 
-  certbot:
-    image: certbot/certbot
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    command: certonly --webroot --webroot-path=/var/www/certbot --email tltlgns6@gmail.com --agree-tos --no-eff-email -d leecone.blog -d www.leecone.blog
-    depends_on:
-      - web
+  # certbot:
+  #   image: certbot/certbot
+  #   volumes:
+  #     - ./certbot/conf:/etc/letsencrypt
+  #     - ./certbot/www:/var/www/certbot
+  #   command: certonly --webroot --webroot-path=/var/www/certbot --email tltlgns6@gmail.com --agree-tos --no-eff-email -d leecone.blog -d www.leecone.blog
+  #   depends_on:
+  #     - web
 
 networks:
   webnet:

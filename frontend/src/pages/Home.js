@@ -38,11 +38,10 @@ const Home = () => {
       
       // 전체 카테고리 추가
       const allCategories = [
-        { id: 'all', name: '전체', categoryType: 'ALL', count: totalElements },
+        { id: 'all', name: '전체', parentId: null, count: totalElements },
         ...categoryData.map(cat => ({
-          id: cat.id.toString(),
+          id: cat.id, // 숫자 ID 유지
           name: cat.name,
-          categoryType: cat.categoryType,
           parentId: cat.parentId,
           parentName: cat.parentName,
           fullPath: cat.fullPath,
@@ -55,11 +54,11 @@ const Home = () => {
       console.error('카테고리 로드 실패:', error);
       // 기본 카테고리 설정
       setCategories([
-        { id: 'all', name: '전체', categoryType: 'ALL', count: totalElements },
-        { id: '1', name: 'Development', categoryType: 'MAIN', count: 0 },
-        { id: '2', name: 'Infrastructure', categoryType: 'MAIN', count: 0 },
-        { id: '3', name: 'Data', categoryType: 'MAIN', count: 0 },
-        { id: '4', name: 'Others', categoryType: 'MAIN', count: 0 },
+        { id: 'all', name: '전체', parentId: null, count: totalElements },
+        { id: '1', name: 'Development', parentId: null, count: 0 },
+        { id: '2', name: 'Infrastructure', parentId: null, count: 0 },
+        { id: '3', name: 'Data', parentId: null, count: 0 },
+        { id: '4', name: 'Others', parentId: null, count: 0 },
       ]);
     }
   };
@@ -166,6 +165,12 @@ const Home = () => {
     setCurrentPage(newPage);
   };
 
+  // 카테고리 변경 시 자동 새로고침
+  const handleCategoryChange = () => {
+    fetchCategories();
+    fetchPosts();
+  };
+
   return (
     <AppLayout
       left={
@@ -204,8 +209,11 @@ const Home = () => {
           categories={categories}
           selected={selected}
           onToggle={handleCategoryToggle}
+          onClearCategories={clear}
           sort={sort}
           onSort={handleSortChange}
+          totalCount={totalElements}
+          filteredCount={posts.length}
         />
 
         {/* 게시글 목록 */}

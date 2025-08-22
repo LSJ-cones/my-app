@@ -21,7 +21,7 @@ export default function PostCard({ post }) {
             <div className="flex items-center gap-3 text-sm text-gray-400 mb-3">
               {post.category && (
                 <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-xs font-medium border border-red-500/30">
-                  {post.category.name}
+                  {post.category.fullPath || post.category.name}
                 </span>
               )}
               <div className="flex items-center gap-1">

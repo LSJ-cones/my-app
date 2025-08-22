@@ -172,11 +172,17 @@ public class CommentService {
             }
         } else {
             // 새로운 반응 추가
+            System.out.println("🔍 CommentService - 새로운 반응 추가");
+            System.out.println("🔍 CommentService - reactionDto.getType(): " + reactionDto.getType());
+            System.out.println("🔍 CommentService - reactionDto: " + reactionDto);
+            
             CommentReaction newReaction = CommentReaction.builder()
                     .comment(comment)
                     .user(currentUser)
                     .type(reactionDto.getType())
                     .build();
+            
+            System.out.println("🔍 CommentService - 생성된 newReaction.getType(): " + newReaction.getType());
             
             if (reactionDto.getType() == ReactionType.LIKE) {
                 comment.incrementLikeCount();
@@ -184,6 +190,7 @@ public class CommentService {
                 comment.incrementDislikeCount();
             }
             
+            System.out.println("🔍 CommentService - 저장 전 newReaction: " + newReaction);
             commentReactionRepository.save(newReaction);
             
             // 새로운 반응에 대한 알림 생성
@@ -254,6 +261,8 @@ public class CommentService {
             commentRepository.save(comment);
         }
     }
+
+
 
     // DTO 변환 메서드
     private CommentResponseDto convertToDto(Comment comment) {

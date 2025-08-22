@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { useAuth } from './AuthContext';
 import NotificationPopup from '../components/NotificationPopup';
 import { toast } from 'react-hot-toast';
+import api from '../services/api';
 
 const NotificationContext = createContext();
 
@@ -45,15 +46,10 @@ export const NotificationProvider = ({ children }) => {
   // 알림 읽음 처리
   const markAsRead = async (notificationId) => {
     try {
-      // API 호출
-      const response = await fetch(`/api/notifications/${notificationId}/read`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // API 호출 (JWT 토큰 포함)
+      const response = await api.put(`/notifications/${notificationId}/read`);
 
-      if (response.ok) {
+      if (response.status === 200) {
         // 로컬 상태 업데이트
         setNotifications(prev => 
           prev.map(notification => 
@@ -74,14 +70,9 @@ export const NotificationProvider = ({ children }) => {
   // 모든 알림 읽음 처리
   const markAllAsRead = async () => {
     try {
-      const response = await fetch('/api/notifications/read-all', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await api.put('/notifications/read-all');
 
-      if (response.ok) {
+      if (response.status === 200) {
         // 모든 알림을 읽음 상태로 변경
         setNotifications(prev => 
           prev.map(notification => ({ ...notification, status: 'READ' }))
@@ -96,9 +87,9 @@ export const NotificationProvider = ({ children }) => {
   // 알림 목록 조회
   const fetchNotifications = async () => {
     try {
-      const response = await fetch('/api/notifications?page=0&size=50&sortBy=createdAt&sortDirection=desc');
-      if (response.ok) {
-        const data = await response.json();
+      const response = await api.get('/notifications?page=0&size=50&sortBy=createdAt&sortDirection=desc');
+      if (response.status === 200) {
+        const data = response.data;
         setNotifications(data.content || []);
         setUnreadCount(data.content?.filter(n => n.status === 'UNREAD').length || 0);
       }

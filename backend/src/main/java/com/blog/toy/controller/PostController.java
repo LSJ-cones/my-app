@@ -22,6 +22,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -52,14 +54,32 @@ public class PostController {
         pageRequestDto.setSortDirection(sortDirection);
 
         if (categories != null && !categories.trim().isEmpty()) {
-            // 쉼표로 구분된 카테고리명들을 배열로 분리
-            String[] categoryNames = categories.split(",");
-            if (categoryNames.length == 1) {
-                // 단일 카테고리인 경우 기존 메서드 사용
-                return postService.findByCategoryName(categoryNames[0].trim(), pageRequestDto);
+            System.out.println("🔍 PostController - categories 파라미터: " + categories);
+            // 쉼표로 구분된 카테고리 ID들을 배열로 분리
+            String[] categoryIds = categories.split(",");
+            if (categoryIds.length == 1) {
+                // 단일 카테고리인 경우 ID로 조회
+                try {
+                    Long categoryId = Long.parseLong(categoryIds[0].trim());
+                    System.out.println("🔍 PostController - ID로 조회 시도: " + categoryId);
+                    return postService.findByCategory(categoryId, pageRequestDto);
+                } catch (NumberFormatException e) {
+                    // ID가 아닌 경우 이름으로 조회 (하위 호환성)
+                    System.out.println("🔍 PostController - 이름으로 조회 시도: " + categoryIds[0].trim());
+                    return postService.findByCategoryName(categoryIds[0].trim(), pageRequestDto);
+                }
             } else {
-                // 다중 카테고리인 경우 새로운 메서드 사용
-                return postService.findByCategoryNames(categoryNames, pageRequestDto);
+                // 다중 카테고리인 경우 ID로 조회
+                try {
+                    List<Long> categoryIdList = Arrays.stream(categoryIds)
+                        .map(String::trim)
+                        .map(Long::parseLong)
+                        .collect(Collectors.toList());
+                    return postService.findByCategoryIds(categoryIdList, pageRequestDto);
+                } catch (NumberFormatException e) {
+                    // ID가 아닌 경우 이름으로 조회 (하위 호환성)
+                    return postService.findByCategoryNames(categoryIds, pageRequestDto);
+                }
             }
         }
 

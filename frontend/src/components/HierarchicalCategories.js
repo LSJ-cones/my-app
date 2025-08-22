@@ -4,9 +4,14 @@ import { ChevronDown, ChevronRight, Folder, FolderOpen } from 'lucide-react';
 export default function HierarchicalCategories({ categories, selected, onToggle, onSelect }) {
   const [expandedCategories, setExpandedCategories] = useState(new Set());
 
-  // 대분류와 소분류로 분리
-  const mainCategories = categories.filter(cat => cat.categoryType === 'MAIN');
-  const subCategories = categories.filter(cat => cat.categoryType === 'SUB');
+  // 대분류와 소분류로 분리 (parentId가 null이면 대분류, 있으면 소분류)
+  const mainCategories = categories.filter(cat => !cat.parentId && cat.id !== 'all');
+  const subCategories = categories.filter(cat => cat.parentId);
+  
+  // 디버깅용 로그
+  console.log('🔍 HierarchicalCategories - 전체 카테고리:', categories);
+  console.log('🔍 HierarchicalCategories - 대분류:', mainCategories);
+  console.log('🔍 HierarchicalCategories - 소분류:', subCategories);
 
   // 카테고리 확장/축소 토글
   const toggleExpanded = (categoryId) => {
@@ -28,7 +33,7 @@ export default function HierarchicalCategories({ categories, selected, onToggle,
 
   // 카테고리 클릭 핸들러
   const handleCategoryClick = (category) => {
-    if (category.categoryType === 'MAIN') {
+    if (!category.parentId) {
       // 대분류 클릭 시 확장/축소
       toggleExpanded(category.id);
     } else {

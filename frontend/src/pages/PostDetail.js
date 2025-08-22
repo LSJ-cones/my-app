@@ -214,7 +214,9 @@ const PostDetail = () => {
       if (cleanPostData.category && typeof cleanPostData.category === 'object') {
         const safeCategory = {
           id: cleanPostData.category.id || 0,
-          name: cleanPostData.category.name || ''
+          name: cleanPostData.category.name || '',
+          fullPath: cleanPostData.category.fullPath || cleanPostData.category.name || '',
+          parentName: cleanPostData.category.parentName || null
         };
         // 카테고리에서도 위험한 키들 제거
         dangerousKeys.forEach(key => {
@@ -471,9 +473,15 @@ const PostDetail = () => {
   // 댓글 반응 처리
   const handleCommentReaction = async (commentId, reactionType) => {
     try {
+      console.log('🔍 프론트엔드 - 댓글 반응 요청:', { commentId, reactionType });
+      console.log('🔍 프론트엔드 - API URL:', `/comments/${commentId}/reaction`);
+      console.log('🔍 프론트엔드 - 요청 데이터:', { type: reactionType });
+      
       const response = await api.post(`/comments/${commentId}/reaction`, {
-        reactionType: reactionType
+        type: reactionType
       });
+      
+      console.log('🔍 프론트엔드 - 응답 성공:', response.data);
       
       if (response.data) {
         // 댓글 목록 새로고침
@@ -484,7 +492,11 @@ const PostDetail = () => {
         toast.success(`댓글에 ${reactionText}를 눌렀습니다.`);
       }
     } catch (error) {
-      console.error('댓글 반응 처리 실패:', error);
+      console.error('🔍 프론트엔드 - 댓글 반응 처리 실패:', error);
+      console.error('🔍 프론트엔드 - 에러 응답:', error.response);
+      console.error('🔍 프론트엔드 - 에러 상태:', error.response?.status);
+      console.error('🔍 프론트엔드 - 에러 데이터:', error.response?.data);
+      
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
@@ -769,7 +781,7 @@ const PostDetail = () => {
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-4">
                             <span className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm font-medium">
-                              <SafeText value={post?.category} fallback="기타" />
+                              {post?.category?.fullPath || post?.category?.name || "기타"}
                             </span>
                             <span className="text-gray-400 text-sm">
                               {formatDate(post?.createdAt)}

@@ -33,7 +33,9 @@ public class CategoryController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CategoryResponseDto> createCategory(@Valid @RequestBody CategoryRequestDto requestDto) {
+        System.out.println("🔍 카테고리 생성 요청: " + requestDto);
         CategoryResponseDto response = categoryService.createCategory(requestDto);
+        System.out.println("🔍 카테고리 생성 응답: " + response);
         return ResponseEntity.ok(response);
     }
 
@@ -53,7 +55,9 @@ public class CategoryController {
     })
     @GetMapping("/hierarchy")
     public ResponseEntity<List<CategoryResponseDto>> getHierarchicalCategories() {
+        System.out.println("🔍 계층형 카테고리 조회 요청");
         List<CategoryResponseDto> categories = categoryService.getHierarchicalCategories();
+        System.out.println("🔍 계층형 카테고리 조회 응답: " + categories.size() + "개");
         return ResponseEntity.ok(categories);
     }
 
@@ -99,7 +103,9 @@ public class CategoryController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CategoryResponseDto> updateCategory(@PathVariable Long id, @Valid @RequestBody CategoryRequestDto requestDto) {
+        System.out.println("🔍 카테고리 수정 요청 - ID: " + id + ", 데이터: " + requestDto);
         CategoryResponseDto response = categoryService.updateCategory(id, requestDto);
+        System.out.println("🔍 카테고리 수정 응답: " + response);
         return ResponseEntity.ok(response);
     }
 
@@ -113,7 +119,9 @@ public class CategoryController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+        System.out.println("🔍 카테고리 삭제 요청 - ID: " + id);
         categoryService.deleteCategory(id);
+        System.out.println("🔍 카테고리 삭제 완료");
         return ResponseEntity.ok().build();
     }
 

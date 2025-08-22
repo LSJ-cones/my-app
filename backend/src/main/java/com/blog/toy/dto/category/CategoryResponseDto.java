@@ -17,11 +17,10 @@ public class CategoryResponseDto {
     private String description;
     private Integer displayOrder;
     private boolean active;
-    private Category.CategoryType categoryType;
     private Long parentId;
     private String parentName;
     private String fullPath;
+    private Long postCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private Long postCount;
 }
