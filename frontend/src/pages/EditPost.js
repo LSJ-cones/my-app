@@ -14,8 +14,6 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
-import ReactQuill from 'react-quill';
-import '../quill-styles.css';
 
 const EditPost = () => {
   const { id } = useParams();
@@ -30,27 +28,7 @@ const EditPost = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // Quill 에디터 설정
-  const quillModules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-      [{ 'color': [] }, { 'background': [] }],
-      [{ 'align': [] }],
-      ['link', 'image', 'code-block'],
-      ['clean']
-    ],
-  };
 
-  const quillFormats = [
-    'header',
-    'bold', 'italic', 'underline', 'strike',
-    'list', 'bullet',
-    'color', 'background',
-    'align',
-    'link', 'image', 'code-block'
-  ];
 
   const categories = [
     { id: 'JAVA', name: 'Java', icon: <Code className="w-4 h-4" /> },
@@ -237,23 +215,22 @@ const EditPost = () => {
               <label htmlFor="content" className="block text-sm font-medium text-gray-300 mb-2">
                 내용
               </label>
-              <div className="quill-editor-container">
-                <ReactQuill
-                  theme="snow"
-                  value={formData.content}
-                  onChange={(content) => setFormData(prev => ({ ...prev, content }))}
-                  modules={quillModules}
-                  formats={quillFormats}
-                  placeholder="게시글 내용을 입력하세요..."
-                  style={{ height: '300px' }}
-                />
-              </div>
+              <textarea
+                id="content"
+                name="content"
+                value={formData.content}
+                onChange={handleChange}
+                placeholder="게시글 내용을 입력하세요..."
+                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200 resize-none"
+                rows={15}
+                maxLength={10000}
+              />
               <div className="flex justify-between items-center mt-1">
                 <span className="text-xs text-gray-400">
-                  리치 텍스트 에디터를 사용하여 서식을 적용할 수 있습니다
+                  마크다운 형식을 지원합니다
                 </span>
                 <span className="text-xs text-gray-400">
-                  {formData.content.replace(/<[^>]*>/g, '').length}자
+                  {formData.content.length}/10000
                 </span>
               </div>
             </div>

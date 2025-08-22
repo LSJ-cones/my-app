@@ -126,14 +126,14 @@ export default function FilterBar({
               onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
               className="flex items-center justify-between w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-xl text-gray-200 hover:bg-gray-800/70 focus:outline-none focus:ring-2 focus:ring-red-500/60 focus:border-transparent transition-colors"
             >
-              <div className="flex items-center space-x-2">
-                <Filter className="w-4 h-4" />
+        <div className="flex items-center space-x-2">
+          <Filter className="w-4 h-4" />
                 <span className="text-sm">
                   {selectedCategoryNames.length > 0 
                     ? `${selectedCategoryNames.join(', ')} 선택됨`
                     : '카테고리 선택'
                   }
-                </span>
+          </span>
               </div>
               <ChevronDown className={`w-4 h-4 transition-transform ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
@@ -221,9 +221,9 @@ export default function FilterBar({
                   ))}
                 </div>
               </div>
-            )}
-          </div>
-
+          )}
+        </div>
+        
           {/* 선택된 카테고리 칩들 */}
           {selectedCategoryNames.length > 0 && (
             <div className="flex flex-wrap gap-2">
@@ -233,8 +233,8 @@ export default function FilterBar({
                   className="flex items-center space-x-2 px-3 py-1 bg-red-600/20 border border-red-600/30 rounded-full text-sm text-red-300"
                 >
                   <span>{name}</span>
-                  <button
-                    onClick={() => {
+          <button
+            onClick={() => {
                       const category = categories.find(cat => cat.name === name);
                       if (category) {
                         onToggle(category.id);
@@ -243,12 +243,12 @@ export default function FilterBar({
                     className="hover:text-red-200"
                   >
                     <X className="w-3 h-3" />
-                  </button>
+          </button>
                 </div>
               ))}
             </div>
-          )}
-        </div>
+        )}
+      </div>
       )}
 
       {/* 기존 카테고리 칩들 (하위 호환성을 위해 유지) */}
