@@ -38,23 +38,27 @@
 
 ## 🚀 빠른 시작
 
-### 로컬 개발 환경
+### 환경별 설정
 
+#### 로컬 개발 환경
 ```bash
 # 1. 프로젝트 클론
 git clone https://github.com/LSJ-cones/my-app.git
 cd my-app
 
-# 2. Docker Compose로 실행
-docker-compose up -d
+# 2. 로컬 개발 환경 시작
+chmod +x dev.sh
+./dev.sh
+
+# 또는 수동으로 실행
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
 # 3. 접속
 # 메인 사이트: http://localhost
 # API 문서: http://localhost:8081/swagger-ui.html
 ```
 
-### EC2 배포
-
+#### 프로덕션 환경 (EC2)
 ```bash
 # 1. EC2 인스턴스 준비
 sudo yum update -y
@@ -67,9 +71,12 @@ sudo usermod -a -G docker ec2-user
 git clone https://github.com/LSJ-cones/my-app.git
 cd my-app
 
-# 3. 배포 스크립트 실행
+# 3. 프로덕션 배포
 chmod +x deploy.sh
 ./deploy.sh
+
+# 또는 수동으로 실행
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
 ## 📁 프로젝트 구조
@@ -94,9 +101,11 @@ my-app/
 │   └── Dockerfile
 ├── nginx/                   # Nginx 설정
 │   └── nginx.conf
-├── docker-compose.yml       # 개발 환경
-├── docker-compose.prod.yml  # 프로덕션 환경
-└── deploy.sh               # 배포 스크립트
+├── docker-compose.yml       # 기본 설정 (공통)
+├── docker-compose.dev.yml   # 로컬 개발 환경 설정
+├── docker-compose.prod.yml  # 프로덕션 환경 설정 (SSL 포함)
+├── deploy.sh               # 프로덕션 배포 스크립트
+└── dev.sh                  # 로컬 개발 환경 스크립트
 ```
 
 ## 🔧 환경 설정

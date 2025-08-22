@@ -1,35 +1,20 @@
 version: '3.8'
 
 services:
-  backend:
-    build: ./backend
-    container_name: my-app-backend
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://database-2.cxw0w0g0cyap.ap-northeast-1.rds.amazonaws.com:5432/my_app
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=diRlqkq99*
-    ports:
-      - "8081:8081"
-    restart: unless-stopped
-    networks:
-      - webnet
-    volumes:
-      - ./uploads:/app/uploads
-
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: my-app-web
     ports:
       - "80:80"
-    depends_on:
-      - backend
-    restart: unless-stopped
-    networks:
-      - webnet
+      - "443:443"  # SSL 포트 추가
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf  # EC2용 nginx 설정
+      - ./certbot/conf:/etc/letsencrypt  # SSL 인증서 볼륨
+      - ./certbot/www:/var/www/certbot
 
-networks:
-  webnet:
-    driver: bridge
+  certbot:  # SSL 인증서 갱신용
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    command: certonly --webroot --webroot-path=/var/www/certbot --email tltlgn6@gmail.com --agree-tos --no-eff-email -d leecone.blog -d www.leecone.blog
+    depends_on:
+      - web
